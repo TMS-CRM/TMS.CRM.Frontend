@@ -9,6 +9,8 @@ jobs:
   deploy-frontend-certificate-stack:
     runs-on: ubuntu-latest
     environment: dev
+    outputs:
+      cert_arn: ${{ steps.get_cert_arn.outputs.cert_arn }}
     env:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       AWS_REGION: us-east-1
@@ -58,7 +60,8 @@ jobs:
             --stack-name TmsCrmFrontendCertificateStack \
             --query "Stacks[0].Outputs[?OutputKey=='CertificateArnOutput'].OutputValue" \
             --output text --region us-east-1)
-          echo "cert_arn=$CERT_ARN" >> $GITHUB_ENV
+          echo "cert_arn=$CERT_ARN"
+          echo "::set-output name=cert_arn::$CERT_ARN"
 
   deploy-frontend-stack:
     runs-on: ubuntu-latest
@@ -110,4 +113,5 @@ jobs:
             --context stack=TmsCrmFrontendStack \
             TmsCrmFrontendStack \
             --parameters TmsCrmFrontendDomain=${{ vars.TMS_CRM_FRONTEND_DOMAIN }} \
-            --parameters TmsCrmFrontendCertificateArn=$cert_arn
+            --parameters TmsCrmFrontendCertificateArn=${{ needs.deploy-frontend-certificate-stack.outputs.cert_arn }}
+
