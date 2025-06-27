@@ -6,23 +6,6 @@ on:
       - main
 
 jobs:
-  build-frontend:
-    runs-on: ubuntu-latest
-    environment: dev
-    steps:
-      - name: Checkout the code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install and build frontend
-        run: |
-          npm ci
-          npm run build
-
   deploy-frontend-certificate-stack:
     runs-on: ubuntu-latest
     environment: dev
@@ -59,10 +42,13 @@ jobs:
             echo "CDK environment already bootstrapped."
           fi
 
-      - name: Deploy Certificate Stack
+      - name: Deploy certificate stack
         run: |
           cd cdk
-          npm run cdk:deploy -- --require-approval never TmsCrmFrontendCertificateStack \
+          npm run cdk:deploy -- \
+            --require-approval never \
+            --context stack=TmsCrmFrontendCertificateStack \
+            TmsCrmFrontendCertificateStack \
             --parameters TmsCrmFrontendDomain=${{ vars.TMS_CRM_FRONTEND_DOMAIN }}
 
       - name: Get Certificate ARN from Output
@@ -90,6 +76,11 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install and build frontend
+        run: |
+          npm ci
+          npm run build
+
       - name: Install CDK dependencies
         run: |
           cd cdk
@@ -111,9 +102,12 @@ jobs:
             echo "CDK environment already bootstrapped."
           fi
 
-      - name: Deploy Frontend Stack
+      - name: Deploy frontend stack
         run: |
           cd cdk
-          npm run cdk:deploy -- --require-approval never TmsCrmFrontendStack \
+          npm run cdk:deploy -- \
+            --require-approval never \
+            --context stack=TmsCrmFrontendStack \
+            TmsCrmFrontendStack \
             --parameters TmsCrmFrontendDomain=${{ vars.TMS_CRM_FRONTEND_DOMAIN }} \
             --parameters TmsCrmFrontendCertificateArn=$cert_arn

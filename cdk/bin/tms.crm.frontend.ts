@@ -4,6 +4,12 @@ import { TmsCrmFrontendStack } from '../lib/tms.crm.frontend-stack.js';
 import { TmsCrmFrontendCertificateStack } from '../lib/tms.crm.frontend.certificate-stack.js';
 
 const app = new cdk.App();
+const stack = app.node.tryGetContext("stack");
 
-new TmsCrmFrontendCertificateStack(app, 'TmsCrmFrontendCertificateStack');
-new TmsCrmFrontendStack(app, 'TmsCrmFrontendStack');
+if (!stack || stack === "TmsCrmFrontendCertificateStack") {
+  new TmsCrmFrontendCertificateStack(app, "TmsCrmFrontendCertificateStack");
+}
+
+if (!stack || stack === "TmsCrmFrontendStack") {
+  new TmsCrmFrontendStack(app, "TmsCrmFrontendStack");
+}
