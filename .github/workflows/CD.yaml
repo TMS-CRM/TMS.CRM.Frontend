@@ -1,0 +1,108 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-frontend-certificate-stack:
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      AWS_REGION: us-east-1
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install CDK dependencies
+        run: |
+          cd cdk
+          npm ci
+
+      - name: Configure AWS credentials for Certificate Stack
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Bootstrap CDK (us-east-1)
+        run: |
+          if ! aws ssm get-parameter --name /cdk-bootstrap/hnb659fds/version --region us-east-1; then
+            echo "Bootstrapping CDK environment..."
+            npx --package aws-cdk cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/us-east-1 --require-approval never
+          else
+            echo "CDK environment already bootstrapped."
+          fi
+
+      - name: Deploy Certificate Stack
+        run: |
+          cd cdk
+          npm run cdk:deploy -- --require-approval never TmsCrmFrontendCertificateStack \
+            --parameters TmsCrmFrontendDomain=${{ vars.TMS_CRM_FRONTEND_DOMAIN }}
+
+      - name: Get Certificate ARN from Output
+        id: get_cert_arn
+        run: |
+          CERT_ARN=$(aws cloudformation describe-stacks \
+            --stack-name TmsCrmFrontendCertificateStack \
+            --query "Stacks[0].Outputs[?OutputKey=='CertificateArnOutput'].OutputValue" \
+            --output text --region us-east-1)
+          echo "cert_arn=$CERT_ARN" >> $GITHUB_ENV
+
+  deploy-frontend-stack:
+    runs-on: ubuntu-latest
+    needs: deploy-frontend-certificate-stack
+    environment: dev
+    env:
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      AWS_REGION: ap-southeast-2
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install and build frontend
+        run: |
+          npm ci
+          npm run build
+
+      # Install CDK dependencies
+      - name: Install CDK dependencies
+        run: |
+          cd cdk
+          npm ci
+
+      - name: Configure AWS credentials for Dev Stack
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
+
+      - name: Bootstrap CDK (only if needed)
+        run: |
+          if ! aws ssm get-parameter --name /cdk-bootstrap/hnb659fds/version --region ap-southeast-2; then
+            echo "Bootstrapping CDK environment..."
+            npx --package aws-cdk cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/ap-southeast-2 --require-approval never
+          else
+            echo "CDK environment already bootstrapped."
+          fi
+
+      - name: Deploy Frontend Stack
+        run: |
+          cd cdk
+          npm run cdk:deploy -- --require-approval never TmsCrmFrontendStack \
+            --parameters TmsCrmFrontendDomain=${{ vars.TMS_CRM_FRONTEND_DOMAIN }} \
+            --parameters TmsCrmFrontendCertificateArn=$cert_arn
