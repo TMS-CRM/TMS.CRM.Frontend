@@ -78,7 +78,6 @@ jobs:
           npm ci
           npm run build
 
-      # Install CDK dependencies
       - name: Install CDK dependencies
         run: |
           cd cdk
