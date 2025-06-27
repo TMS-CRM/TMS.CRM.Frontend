@@ -60,25 +60,23 @@ jobs:
             --stack-name TmsCrmFrontendCertificateStack \
             --query "Stacks[0].Outputs[?OutputKey=='CertificateArnOutput'].OutputValue" \
             --output text --region us-east-1)
+          if [ -z "$CERT_ARN" ]; then
+            echo "Certificate ARN is empty! Failing the job."
+            exit 1
+          fi
           echo "cert_arn=$CERT_ARN" >> $GITHUB_OUTPUT
 
   deploy-frontend-stack:
-    runs-on: ubuntu-latest
     needs: deploy-frontend-certificate-stack
+    runs-on: ubuntu-latest
     environment: dev
     env:
+      CERT_ARN: ${{ needs.deploy-frontend-certificate-stack.outputs.cert_arn }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       AWS_REGION: ap-southeast-2
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
-
-      - name: Check Certificate ARN is set
-        run: |
-          if [ -z "${{ needs.deploy-frontend-certificate-stack.outputs.cert_arn }}" ]; then
-            echo "ERROR: Certificate ARN is empty. Aborting deployment."
-            exit 1
-          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -111,6 +109,15 @@ jobs:
             echo "CDK environment already bootstrapped."
           fi
 
+      - name: Check Certificate ARN is set
+        run: |
+          if [ -z "$CERT_ARN" ]; then
+            echo "ERROR: Certificate ARN is empty, aborting deploy."
+            exit 1
+          else
+            echo "Certificate ARN found: $CERT_ARN"
+          fi
+
       - name: Deploy frontend stack
         run: |
           cd cdk
@@ -119,4 +126,4 @@ jobs:
             --context stack=TmsCrmFrontendStack \
             TmsCrmFrontendStack \
             --parameters TmsCrmFrontendDomain=${{ vars.TMS_CRM_FRONTEND_DOMAIN }} \
-            --parameters TmsCrmFrontendCertificateArn=${{ needs.deploy-frontend-certificate-stack.outputs.cert_arn }}
+            --parameters TmsCrmFrontendCertificateArn=$CERT_ARN
