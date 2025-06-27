@@ -6,14 +6,11 @@ on:
       - main
 
 jobs:
-  deploy-frontend-certificate-stack:
+  deploy-frontend:
     runs-on: ubuntu-latest
     environment: dev
-    outputs:
-      cert_arn: ${{ steps.get_cert_arn.outputs.cert_arn }}
     env:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-      AWS_REGION: us-east-1
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
@@ -28,7 +25,7 @@ jobs:
           cd cdk
           npm ci
 
-      - name: Configure AWS credentials for Certificate Stack
+      - name: Configure AWS credentials for Certificate Stack (us-east-1)
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -64,43 +61,17 @@ jobs:
             echo "Certificate ARN is empty! Failing the job."
             exit 1
           fi
-          echo "cert_arn=$CERT_ARN" >> $GITHUB_OUTPUT
+          echo "CERT_ARN=$CERT_ARN" >> $GITHUB_ENV
 
-  deploy-frontend-stack:
-    needs: deploy-frontend-certificate-stack
-    runs-on: ubuntu-latest
-    environment: dev
-    env:
-      CERT_ARN: ${{ needs.deploy-frontend-certificate-stack.outputs.cert_arn }}
-      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-      AWS_REGION: ap-southeast-2
-    steps:
-      - name: Checkout the code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install and build frontend
-        run: |
-          npm ci
-          npm run build
-
-      - name: Install CDK dependencies
-        run: |
-          cd cdk
-          npm ci
-
-      - name: Configure AWS credentials for Dev Stack
+      # Switch AWS region and credentials for frontend deployment
+      - name: Configure AWS credentials for Frontend Stack (ap-southeast-2)
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-southeast-2
 
-      - name: Bootstrap CDK (only if needed)
+      - name: Bootstrap CDK (ap-southeast-2)
         run: |
           if ! aws ssm get-parameter --name /cdk-bootstrap/hnb659fds/version --region ap-southeast-2; then
             echo "Bootstrapping CDK environment..."
@@ -109,14 +80,15 @@ jobs:
             echo "CDK environment already bootstrapped."
           fi
 
-      - name: Check Certificate ARN is set
+      - name: Install and build frontend
         run: |
-          if [ -z "$CERT_ARN" ]; then
-            echo "ERROR: Certificate ARN is empty, aborting deploy."
-            exit 1
-          else
-            echo "Certificate ARN found: $CERT_ARN"
-          fi
+          npm ci
+          npm run build
+
+      - name: Install CDK dependencies for frontend stack
+        run: |
+          cd cdk
+          npm ci
 
       - name: Deploy frontend stack
         run: |
