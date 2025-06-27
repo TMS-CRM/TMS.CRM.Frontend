@@ -5,5 +5,5 @@ import { TmsCrmFrontendCertificateStack } from '../lib/tms.crm.frontend.certific
 
 const app = new cdk.App();
 
-new TmsCrmFrontendStack(app, 'TmsCrmFrontendStack', {});
-new TmsCrmFrontendCertificateStack(app, 'TmsCrmFrontendCertificateStack', {});
+new TmsCrmFrontendCertificateStack(app, 'TmsCrmFrontendCertificateStack');
+new TmsCrmFrontendStack(app, 'TmsCrmFrontendStack');

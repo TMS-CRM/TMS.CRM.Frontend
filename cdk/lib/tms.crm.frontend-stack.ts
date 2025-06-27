@@ -67,7 +67,7 @@ export class TmsCrmFrontendStack extends Stack {
 
     // Deploy site to S3 + invalidate CF cache
     new s3deploy.BucketDeployment(this, "DeployWebsite", {
-      sources: [s3deploy.Source.asset("dist")],
+      sources: [s3deploy.Source.asset("../dist")],
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ["/*"],
