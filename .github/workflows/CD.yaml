@@ -60,8 +60,7 @@ jobs:
             --stack-name TmsCrmFrontendCertificateStack \
             --query "Stacks[0].Outputs[?OutputKey=='CertificateArnOutput'].OutputValue" \
             --output text --region us-east-1)
-          echo "cert_arn=$CERT_ARN"
-          echo "::set-output name=cert_arn::$CERT_ARN"
+          echo "cert_arn=$CERT_ARN" >> $GITHUB_OUTPUT
 
   deploy-frontend-stack:
     runs-on: ubuntu-latest
@@ -73,6 +72,13 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
+
+      - name: Check Certificate ARN is set
+        run: |
+          if [ -z "${{ needs.deploy-frontend-certificate-stack.outputs.cert_arn }}" ]; then
+            echo "ERROR: Certificate ARN is empty. Aborting deployment."
+            exit 1
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -114,4 +120,3 @@ jobs:
             TmsCrmFrontendStack \
             --parameters TmsCrmFrontendDomain=${{ vars.TMS_CRM_FRONTEND_DOMAIN }} \
             --parameters TmsCrmFrontendCertificateArn=${{ needs.deploy-frontend-certificate-stack.outputs.cert_arn }}
-
