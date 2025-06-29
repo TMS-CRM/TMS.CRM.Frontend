@@ -1,0 +1,78 @@
+.recent-deals-not-found-card {
+  display: flex;
+  align-items: center;
+  color: #7e92a2;
+  align-items: start;
+}
+
+.icon-not-found-card {
+  color: #7e92a2;
+  margin-right: 13px;
+}
+
+.card-recent-deals {
+  background-color: #ffffff;
+  position: relative;
+  border: 1px solid #eaeef4;
+  box-shadow: none !important;
+  border-radius: 12px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.header-recent-deal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 33px !important;
+}
+
+.text-button-recent-deal:hover {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.body-text-recent-deal {
+  margin-left: 14px;
+  font-size: 14px;
+}
+
+.body-text-recent-deal:nth-of-type(2) {
+  text-align: right;
+}
+
+.deal-body-recent-deal {
+  display: flex;
+  margin-top: 18px !important;
+}
+
+.deal-body-recent-deal:last-child {
+  margin-bottom: 9px !important;
+}
+
+.details-body-recent-deal {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+@media (max-width: 425px) {
+  .deal-body-recent-deal {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .details-body-recent-deal {
+    flex-direction: column;
+  }
+
+  .body-text-recent-deal {
+    margin-left: 0;
+  }
+
+  .body-text-recent-deal:nth-of-type(2) {
+    text-align: start;
+  }
+}

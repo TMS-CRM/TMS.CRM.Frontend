@@ -1,0 +1,40 @@
+.select-box-select-customer {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0px 34px 0 24px;
+  scrollbar-width: none;
+}
+
+.select-box-select-customer::-webkit-scrollbar {
+  width: 5px;
+}
+
+.select-box-select-customer::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 10px;
+}
+
+.customer-selected-select-customer {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.customer-name-select-customer {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.customer-email-select-customer {
+  color: #7e92a2;
+  font-weight: 400;
+  line-height: 30px;
+}
+
+@media (max-width: 447px) {
+  .select-box-select-customer {
+    padding: 0px 20px;
+  }
+}

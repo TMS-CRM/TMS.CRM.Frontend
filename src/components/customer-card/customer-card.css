@@ -1,0 +1,58 @@
+.not-found-customer-card {
+  display: flex;
+  align-items: center;
+  color: #7e92a2;
+  align-items: start;
+}
+
+.customer-card {
+  background-color: #eef6fb !important;
+  box-shadow: none !important;
+  border-radius: 12px;
+  border: none !important;
+  margin: 0 !important;
+  cursor: pointer;
+}
+
+.header-customer-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.customer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-right: 8px;
+}
+
+.edit-icon-customer-card {
+  color: #7e92a2;
+  height: 24px;
+  width: 24px;
+}
+
+@media (max-width: 426px) {
+  .edit-icon-customer-card {
+    display: none;
+  }
+}
+
+@media (max-width: 320px) {
+  .header-customer-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .textButtonCounter {
+    font-size: 13px;
+  }
+
+  .customer {
+    flex-direction: column;
+    align-self: flex-start;
+  }
+}

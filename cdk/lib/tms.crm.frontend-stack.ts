@@ -1,14 +1,14 @@
-import * as cdk from "aws-cdk-lib";
+import * as cdk from 'aws-cdk-lib';
 import {
-  Stack,
   RemovalPolicy,
-  aws_s3 as s3,
+  Stack,
+  aws_certificatemanager as acm,
   aws_cloudfront as cloudfront,
   aws_cloudfront_origins as origins,
+  aws_s3 as s3,
   aws_s3_deployment as s3deploy,
-  aws_certificatemanager as acm,
-} from "aws-cdk-lib";
-import { Construct } from "constructs";
+} from 'aws-cdk-lib';
+import type { Construct } from 'constructs';
 
 export class TmsCrmFrontendStack extends Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -26,10 +26,10 @@ export class TmsCrmFrontendStack extends Stack {
     });
 
     // Load ACM cert from SSM
-    const certificate = acm.Certificate.fromCertificateArn(this, "Certificate", paramTmsCrmFrontendCertificateArn.valueAsString);
+    const certificate = acm.Certificate.fromCertificateArn(this, 'Certificate', paramTmsCrmFrontendCertificateArn.valueAsString);
 
     // S3 Bucket
-    const siteBucket = new s3.Bucket(this, "SiteBucket", {
+    const siteBucket = new s3.Bucket(this, 'SiteBucket', {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       publicReadAccess: false,
@@ -41,40 +41,40 @@ export class TmsCrmFrontendStack extends Stack {
     });
 
     // CloudFront Distribution
-    const distribution = new cloudfront.Distribution(this, "SiteDistribution", {
+    const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
       defaultBehavior: {
         origin: s3Origin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       },
       domainNames: [paramTmsCrmFrontendDomain.valueAsString],
       certificate,
-      defaultRootObject: "index.html",
+      defaultRootObject: 'index.html',
       errorResponses: [
         {
           httpStatus: 403,
           responseHttpStatus: 200,
-          responsePagePath: "/index.html",
+          responsePagePath: '/index.html',
           ttl: cdk.Duration.seconds(0),
         },
         {
           httpStatus: 404,
           responseHttpStatus: 200,
-          responsePagePath: "/index.html",
+          responsePagePath: '/index.html',
           ttl: cdk.Duration.seconds(0),
         },
       ],
     });
 
     // Deploy site to S3 + invalidate CF cache
-    new s3deploy.BucketDeployment(this, "DeployWebsite", {
-      sources: [s3deploy.Source.asset("../dist")],
+    new s3deploy.BucketDeployment(this, 'DeployWebsite', {
+      sources: [s3deploy.Source.asset('../dist')],
       destinationBucket: siteBucket,
       distribution,
-      distributionPaths: ["/*"],
+      distributionPaths: ['/*'],
     });
 
     // Output
-    new cdk.CfnOutput(this, "CloudFrontURL", {
+    new cdk.CfnOutput(this, 'CloudFrontURL', {
       value: `https://${distribution.distributionDomainName}`,
     });
   }

@@ -1,0 +1,145 @@
+.not-found-task-card {
+  display: flex;
+  align-items: center;
+  color: #7e92a2;
+  align-items: start;
+}
+
+.container-task {
+  background-color: #eef6fb;
+  /* padding: 24px; */
+  flex: 1;
+}
+
+/* .card-content-task {
+  padding: 24px 24px 0;
+} */
+
+.task-card {
+  background-color: #f6fafd !important;
+  border: 1px solid #eaeef4 !important;
+  box-shadow: none !important;
+  border-radius: 12px !important;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.task-body {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 16px;
+}
+
+.date-icon-conatiner {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px;
+}
+
+.task-list {
+  max-height: 250px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.check-box-icon-task-card,
+.report-icon-task-card {
+  width: 20px !important;
+  height: 20px !important;
+  line-height: none !important;
+}
+
+.check-box-icon-task-card {
+  color: #2dc8a8 !important;
+}
+
+.report-icon-task-card {
+  color: #fe8084 !important;
+}
+
+.header-task-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.task-description {
+  color: #092c4c !important;
+}
+
+.title-task-card {
+  color: #092c4c !important;
+}
+
+.add-new-task-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #eaeef4;
+  padding: 16px 24px;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.add-new-task-button {
+  color: #7e92a2;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.arrow-task-card {
+  color: #514ef3;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+@media (max-width: 426px) {
+  .check-box-icon-task-card,
+  .report-icon-task-card {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .date-icon-conatiner {
+    display: flex !important;
+    /* flex-direction: column; */
+    gap: 4px;
+  }
+}
+
+@media (max-width: 320px) {
+  .add-new-task-box {
+    padding: 10px 0;
+  }
+
+  .arrow-task-card {
+    width: 20x;
+    height: 20px;
+  }
+
+  .add-new-task-button {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  .check-box-icon-task-card,
+  .report-icon-task-card {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .date-icon-conatiner {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: flex-start !important;
+    /* flex-direction: column; */
+    gap: 4px;
+  }
+}

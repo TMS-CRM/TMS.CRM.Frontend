@@ -1,0 +1,61 @@
+.completed-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.check-box-icon-modal .MuiSvgIcon-root {
+  align-self: flex-end !important;
+  height: 40px !important;
+  width: 30px !important;
+  color: #2dc8a8 !important;
+}
+
+.due-date-box-new-task {
+  flex: 1;
+  margin-top: 24px;
+}
+
+.footer-new-task {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0 28px;
+  gap: 16px !important;
+}
+
+.button-task {
+  background-color: #ffffff !important;
+  border: none;
+  padding: 10px 24px !important;
+  margin-right: 16px !important;
+  width: 100% !important;
+}
+
+.button-task--delete {
+  color: #fe8084 !important;
+}
+
+.button-task--cancel {
+  color: #092c4c !important;
+}
+
+.save-button-task {
+  padding: 10px 24px !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  line-height: 30px !important;
+  border-radius: 70px !important;
+  color: #ffffff !important;
+  width: 100% !important;
+}
+
+@media (max-width: 321px) {
+  .button-task {
+    width: 50% !important;
+  }
+  .save-button-task {
+    font-size: 13px !important;
+    padding: 10px 16px !important;
+  }
+}

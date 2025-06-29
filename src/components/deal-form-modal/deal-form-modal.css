@@ -1,0 +1,39 @@
+.customer-box-new-deal {
+  background-color: #f6fafd !important;
+  padding: 16px 32px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.deal-picture-new-deal {
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  margin-right: 16px !important;
+}
+
+.change-customer-button-new-deal {
+  border: 1px solid #eaeef4 !important;
+  background-color: #ffffff !important;
+  justify-content: center !important;
+  padding: 10px 20px !important;
+}
+
+.deal-details-box-new-deal {
+  display: flex !important;
+  padding: 20px 0 !important;
+}
+
+.progress-box-new-deal {
+  align-items: center;
+}
+
+@media (max-width: 426px) {
+  .customer-box-new-deal {
+    padding: 16px;
+  }
+
+  .change-customer-button-new-deal {
+    justify-content: flex-start;
+    padding: 10px 20px;
+  }
+}
