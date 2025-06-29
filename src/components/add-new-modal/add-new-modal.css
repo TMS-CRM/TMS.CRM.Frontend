@@ -1,0 +1,50 @@
+.form-title-add-new {
+  padding: 11px 15px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.content-box-add-new {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start !important;
+  cursor: pointer;
+  padding: 10px 15px !important;
+  padding-top: 0;
+  border-top: 1px solid #eaeef4 !important;
+}
+
+.options-box-add-new {
+  padding-top: 11px !important;
+}
+
+.options-box-add-new:first-child {
+  padding-top: 0 !important;
+  position: relative;
+}
+
+.option-icon-add-new {
+  color: #7e92a2;
+  margin-right: 15px;
+}
+
+.arrow-icon {
+  color: #514ef3;
+  width: 20px !important;
+  height: 20px !important;
+  justify-content: end;
+}
+
+.arrow-grid-add-new {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* .add-new-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #eaeef4;
+  margin: 0;
+  border: none;
+} */

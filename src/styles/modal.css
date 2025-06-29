@@ -1,0 +1,127 @@
+.box {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background-color: #ffffff;
+  box-shadow: 24px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  max-height: 650px;
+  border-radius: 12px;
+}
+
+.box::-webkit-scrollbar {
+  display: none;
+}
+
+.form-title {
+  padding: 24px 29px 24px 32px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-container {
+  padding: 32px !important;
+  padding-top: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.title-header-modal {
+  margin-bottom: 0;
+  color: #092c4c !important;
+}
+
+.close-icon {
+  cursor: pointer;
+  align-self: end;
+  color: #7e92a2;
+}
+
+.label {
+  margin-bottom: 12px !important;
+  color: #092c4c !important;
+}
+
+.upload-button {
+  padding: 10px 20px !important;
+  background: #f6fafd !important;
+  color: #7e92a2 !important;
+  font-weight: 400 !important;
+  border-radius: 8px !important;
+  border: 1px solid #eaeef4 !important;
+  margin-bottom: 20px !important;
+  cursor: pointer;
+}
+
+.upload-button:hover {
+  border-color: #7e92a2 !important;
+}
+
+.footer-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cancel-button {
+  margin-right: 16px !important;
+  color: #092c4c !important;
+  border: none !important;
+  padding: 10px 24px !important;
+}
+
+.save-button {
+  padding: 10px 24px !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  line-height: 30px !important;
+  border-radius: 70px !important;
+}
+
+.actions-button {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+@media (max-width: 890px) {
+  .form-title {
+    padding: 24px 18px 24px 18px;
+  }
+
+  .actions-button {
+    justify-content: center;
+    margin-top: 30px;
+  }
+
+  .save-button {
+    padding: 10px 20px;
+    justify-content: center;
+  }
+
+  .cancel-button {
+    padding: 10px;
+  }
+
+  .form-container {
+    padding: 22px !important;
+  }
+
+  .form-footer {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 375px) {
+  .form-title {
+    padding: 22px;
+  }
+}

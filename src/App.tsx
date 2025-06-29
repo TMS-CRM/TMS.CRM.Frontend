@@ -1,23 +1,17 @@
-import { Routes, Route, Link } from 'react-router-dom';
+import type { JSX } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import AuthenticatedLayout from './components/authenticated-layout/authenticated-layout';
+import Home from './pages/home/home';
+import SignIn from './pages/sign-in/sign-in';
 
-function Home() {
-  return <h2>Home Page</h2>;
-}
-
-function About() {
-  return <h2>About Pages</h2>;
-}
-
-export default function App() {
+export default function App(): JSX.Element {
   return (
-    <>
-      <nav>
-        <Link to="/">Home</Link> | <Link to="/about">About</Link>
-      </nav>
-      <Routes>
+    <Routes>
+      <Route path="/sign-in" element={<SignIn />} />
+
+      <Route element={<AuthenticatedLayout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-      </Routes>
-    </>
+      </Route>
+    </Routes>
   );
 }
