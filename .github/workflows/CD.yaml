@@ -7,6 +7,7 @@ on:
 
 jobs:
   deploy-frontend:
+    if: false  # Temporarily disabling CD
     runs-on: ubuntu-latest
     environment: dev
     env:
