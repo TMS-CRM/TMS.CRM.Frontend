@@ -5,11 +5,11 @@ import './counter-card.css';
 interface CounterCardProps {
   title: string;
   count: number;
-  iconCounter: unknown;
+  iconCounter: string;
 }
 
 const CounterCard: React.FC<CounterCardProps> = (props: CounterCardProps) => {
-  const { title, count } = props;
+  const { title, count, iconCounter } = props;
 
   // Determine if the count is 0
   const isCountZero = count === 0;
@@ -24,7 +24,7 @@ const CounterCard: React.FC<CounterCardProps> = (props: CounterCardProps) => {
           {count}
         </Typography>
       </Box>
-      {/* <Image
+      <img
         className="image-counter"
         src={iconCounter}
         alt={title}
@@ -34,7 +34,7 @@ const CounterCard: React.FC<CounterCardProps> = (props: CounterCardProps) => {
           borderRadius: '50%',
           filter: isCountZero ? 'grayscale(100%)' : 'none',
         }}
-      /> */}
+      />
     </Card>
   );
 };

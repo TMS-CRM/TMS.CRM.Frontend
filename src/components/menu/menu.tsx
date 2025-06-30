@@ -12,7 +12,7 @@ import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import './menu.css';
-import { Tooltip } from '@mui/material';
+import { Tooltip, useMediaQuery } from '@mui/material';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -22,7 +22,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/use-auth';
 
 const Menu: React.FC = () => {
-  // const isMobile = useMediaQuery('(max-width:600px)');
+  const isMobile = useMediaQuery('(max-width:600px)');
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut } = useAuth();
@@ -52,7 +52,7 @@ const Menu: React.FC = () => {
     {
       name: 'Deals',
       title: 'Deals',
-      path: '/deal',
+      path: '/deals',
       icon: (
         <Tooltip title="Deals" placement="right">
           <BusinessCenterOutlined className="icon-menu" />
@@ -68,7 +68,7 @@ const Menu: React.FC = () => {
     {
       name: 'Customers',
       title: 'Customers',
-      path: '/customer',
+      path: '/customers',
       icon: (
         <Tooltip title="Customers" placement="right">
           <PeopleAltOutlined className="icon-menu" />
@@ -84,7 +84,7 @@ const Menu: React.FC = () => {
     {
       name: 'Tasks',
       title: 'Tasks',
-      path: '/task',
+      path: '/tasks',
       icon: (
         <Tooltip title="Tasks" placement="right">
           <ChecklistOutlined className="icon-menu" />
@@ -100,7 +100,7 @@ const Menu: React.FC = () => {
     {
       name: 'Users',
       title: 'Users',
-      path: '/user',
+      path: '/users',
       icon: (
         <Tooltip title="Users" placement="right">
           <AssignmentIndOutlinedIcon className="icon-menu" />
@@ -121,7 +121,9 @@ const Menu: React.FC = () => {
         {menuItems.map(({ name, path, icon, activeIcon, isActive }) => (
           <ListItem key={name} className="list-item-menu">
             <ListItemButton
-              onClick={() => navigate(path)}
+              onClick={() => {
+                void navigate(path);
+              }}
               className={`list-button-menu ${isActive ? 'active' : ''}`}
               aria-current={isActive ? 'page' : undefined}
             >
@@ -130,15 +132,20 @@ const Menu: React.FC = () => {
           </ListItem>
         ))}
 
-        {/* {isMobile && ( */}
-        <ListItem className="list-item-menu">
-          <ListItemButton onClick={handleSignOut} className="list-button-menu">
-            <ListItemIcon className="icon-menu">
-              <LogoutOutlinedIcon className="icon-menu" />
-            </ListItemIcon>
-          </ListItemButton>
-        </ListItem>
-        {/* )} */}
+        {isMobile && (
+          <ListItem className="list-item-menu">
+            <ListItemButton
+              onClick={() => {
+                void handleSignOut();
+              }}
+              className="list-button-menu"
+            >
+              <ListItemIcon className="icon-menu">
+                <LogoutOutlinedIcon className="icon-menu" />
+              </ListItemIcon>
+            </ListItemButton>
+          </ListItem>
+        )}
       </List>
     </Drawer>
   );

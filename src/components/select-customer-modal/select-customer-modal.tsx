@@ -2,10 +2,11 @@ import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { Avatar, Box, Button, List, Modal, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
-import type { Customers } from '../../types/customer';
+import type { Customer } from '../../types/customer';
 import '../../styles/modal.css';
 import './select-customer-modal.css';
 import CustomerFormModal from '../customer-form-modal/customer-form-modal';
+import { api } from '../../services/api';
 
 interface SelectCustomerModalProps {
   open: boolean;
@@ -14,26 +15,37 @@ interface SelectCustomerModalProps {
 }
 
 const SelectCustomerModal: React.FC<SelectCustomerModalProps> = ({ open, onClose, onCustomerSelected }) => {
-  const [customers, setCustomers] = useState<Customers[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-
-  const customersPerPage = 6;
+  const [totalCustomers, setTotalCustomers] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(0);
+  const limit = 6;
+  const customersPerPage = limit;
 
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setCustomers([]);
-  }, [open]);
+    void fetchCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
-  // async function loadCustomers(): Promise<void> {
-  //   try {
-  //     const response = await api.get('/customers');
-  //     setCustomers(response.data.data);
-  //   } catch (error) {
-  //     console.error('Failed to load customers:', error);
-  //   }
-  // }
+  async function fetchCustomers(): Promise<void> {
+    try {
+      setIsLoading(true);
+      const response = await api.get<{ data: { items: Customer[]; total: number } }>(`/customers?limit=${limit}&offset=${page * limit}`);
+      const responseData = response.data.data;
+
+      setCustomers(responseData.items);
+
+      setTotalCustomers(responseData.total);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   function loadMore(): void {
     setCurrentIndex((prev) => prev + customersPerPage);

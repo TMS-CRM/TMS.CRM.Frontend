@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -11,10 +10,10 @@ import Grid from '@mui/material/Grid';
 import React, { Fragment, type JSX, useEffect, useState } from 'react';
 import './task-card.css';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../services/api';
-import type { Tasks } from '../../types/task';
-import AlertSnackbar from '../alert-snackbar/alert-snackbar';
-import TaskModal from '../task-form-modal/task-form-modal';
+import AlertSnackbar from '../../../../components/alert-snackbar/alert-snackbar';
+import TaskModal from '../../../../components/task-form-modal/task-form-modal';
+import { api } from '../../../../services/api';
+import type { Tasks } from '../../../../types/task';
 
 const TaskCard: React.FC = () => {
   const navigate = useNavigate();
@@ -42,7 +41,6 @@ const TaskCard: React.FC = () => {
       const response = await api.get(`/tasks?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
       setTasks(responseData.items);
-      // setTotalTasks(responseData.total);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     } finally {
@@ -59,10 +57,6 @@ const TaskCard: React.FC = () => {
   if (isLoading) {
     return <Typography sx={{ p: 4 }}>Loading tasks...</Typography>;
   }
-
-  // const getStatusIcon = (task: Task) => {
-  //   return new Date(task.dueDate) < new Date() ? <ReportIcon className="report-icon" /> : null;
-  // };
 
   function getStatusIcon(task: Tasks): JSX.Element | null {
     const currentDate = new Date();

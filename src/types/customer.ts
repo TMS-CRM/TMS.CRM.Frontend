@@ -1,4 +1,4 @@
-export type Customers = {
+export type Customer = {
   uuid: number;
   firstName: string;
   lastName: string;

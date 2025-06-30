@@ -1,15 +1,8 @@
 import { createTheme } from '@mui/material/styles';
-// import { Inter } from 'next/font/google';
-
-// const inter = Inter({
-//   weight: ['300', '400', '500', '700'],
-//   subsets: ['latin'],
-//   display: 'swap',
-// });
 
 const theme = createTheme({
   typography: {
-    // fontFamily: inter.style.fontFamily,
+    fontFamily: 'Inter, sans-serif',
   },
   palette: {
     primary: {
@@ -30,18 +23,31 @@ const theme = createTheme({
   components: {
     MuiCssBaseline: {
       styleOverrides: {
-        styleOverrides: {
-          html: {
-            height: '100vh',
-            width: '100%',
-          },
-          body: {
-            margin: 0,
-            overflowX: 'hidden',
-          },
+        html: {
+          height: '100%',
+          width: '100%',
+        },
+        body: {
+          height: '100%',
+          margin: 0,
+          padding: 0,
+          overflow: 'hidden',
+          backgroundColor: '#F6FAFD',
+        },
+        '#root': {
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        },
+        main: {
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: '#F6FAFD',
         },
       },
     },
+
     MuiAppBar: {
       styleOverrides: {
         root: {
@@ -50,7 +56,6 @@ const theme = createTheme({
           backgroundColor: '#F6FAFD',
           position: 'fixed',
           zIndex: 1201,
-          height: '90px',
         },
       },
     },
@@ -58,15 +63,16 @@ const theme = createTheme({
       styleOverrides: {
         paper: {
           backgroundColor: '#F6FAFD',
-          marginTop: '90px',
+          marginTop: '100px',
           borderRight: '1px solid #EAEEF4',
           width: '90px',
           position: 'fixed',
           alignContent: 'center',
 
-          '@media (max-width: 425px)': {
+          '@media (max-width: 427px)': {
             width: '50px',
             padding: ' 0 10px',
+            marginTop: '70px',
           },
         },
       },

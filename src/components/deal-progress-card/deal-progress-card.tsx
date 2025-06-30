@@ -5,31 +5,51 @@ import Grid from '@mui/material/Grid';
 import { useEffect, useState } from 'react';
 import './deal-progress-card.css';
 import { useNavigate } from 'react-router-dom';
-import { type Activity, mockActivity } from '../../types/activity';
-import { type Deal, mockDeals } from '../../types/deal';
+import { api } from '../../services/api';
+import { type Activity } from '../../types/activity';
+import { type Deal } from '../../types/deal';
 import RadioIcon from '../radio-icon/radio-icon';
 
 const DealProgressCard: React.FC = () => {
   const [deal, setDeal] = useState<Deal | null>(null);
   const [activity, setActivity] = useState<Activity[] | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const navigate = useNavigate();
 
+  // Removed redundant useEffect that called an undefined fetchDealsAndFindLatest function
+
   useEffect(() => {
-    function fetchDealAndActivity(): void {
-      const mostRecentDeal = mockDeals.reduce((prev, current) =>
-        new Date(prev.appointmentDate) > new Date(current.appointmentDate) ? prev : current,
-      );
+    async function fetchDealsAndFindLatest(): Promise<void> {
+      try {
+        setIsLoading(true);
 
-      setDeal(mostRecentDeal);
+        const response = await api.get<{ data: Deal[] }>('/deals?limit=1&offset=0');
+        const deals = response.data.data;
 
-      if (mostRecentDeal) {
-        const associatedActivity = mockActivity.filter((act) => act.dealId === mostRecentDeal.id);
-        setActivity(associatedActivity);
+        // if (deals.length === 0) return;
+
+        // const mostRecentDeal = deals?.reduce((prev, current) =>
+        //   new Date(prev.appointmentDate) > new Date(current.appointmentDate) ? prev : current,
+        // );
+
+        // setDeal(mostRecentDeal);
+
+        // const activityResponse = await api.get<{ data: Activity[] }>(`/activity?dealId=${mostRecentDeal.uuid}`);
+        // setActivity(activityResponse.data.data);
+      } catch (error) {
+        console.error('Failed to fetch deals', error);
+      } finally {
+        setIsLoading(false);
       }
     }
 
-    fetchDealAndActivity(); // Use `void` to suppress unused promise warning
+    void fetchDealsAndFindLatest();
   }, []);
+
+  if (isLoading) {
+    return <Typography sx={{ p: 4 }}>Loading deal...</Typography>;
+  }
 
   if (!deal) {
     return (
@@ -60,7 +80,7 @@ const DealProgressCard: React.FC = () => {
 
   function handleDealIdClick(): void {
     if (deal) {
-      void navigate(`deal/${deal.id}`);
+      void navigate(`deal/${deal.uuid}`);
     }
   }
 
@@ -87,7 +107,7 @@ const DealProgressCard: React.FC = () => {
 
         {activity &&
           activity.slice(0, 4).map((act) => (
-            <Box key={act.id} className="activities-container">
+            <Box key={act.uuid} className="activities-container">
               <Box display="flex" alignItems="center" gap={1}>
                 <RadioIcon />
                 <Box>

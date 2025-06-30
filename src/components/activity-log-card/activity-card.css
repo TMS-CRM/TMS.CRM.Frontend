@@ -1,0 +1,55 @@
+.not-found-activity-log {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #7e92a2 !important;
+}
+
+.text-no-activity-found {
+  color: #7e92a2 !important;
+  font-weight: 500 !important;
+}
+
+.card-activity-log {
+  /* padding: 24px !important; */
+  padding-top: 0 !important;
+  background-color: #eef6fb !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.header-activity-log {
+  padding-bottom: 24px !important;
+}
+
+.box-content-activity-log {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  gap: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.description-activity {
+  color: #092c4c !important;
+  font-weight: 500 !important;
+}
+
+.log-image-activity-log-card {
+  width: 50%;
+  height: 50%;
+}
+
+@media (max-width: 447px) {
+  .card-activity-log {
+    padding: 16px !important;
+  }
+
+  .log-image-activity-log-card {
+    width: 60%;
+    height: 60%;
+  }
+}

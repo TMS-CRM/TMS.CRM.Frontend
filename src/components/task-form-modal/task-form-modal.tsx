@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -130,7 +130,7 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
   }
 
   if (isLoading) {
-    return <Typography sx={{ p: 4 }}>Loading tasks...</Typography>;
+    return <Typography sx={{ p: 4 }}>Loading task...</Typography>;
   }
 
   return (
@@ -175,12 +175,25 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
                 )}
 
                 {taskUuid && (
-                  <Button onClick={handleDelete} variant="text" className="button-task button-task--delete">
+                  <Button
+                    onClick={() => {
+                      void handleDelete();
+                    }}
+                    variant="text"
+                    className="button-task button-task--delete"
+                  >
                     Delete
                   </Button>
                 )}
 
-                <Button variant="contained" onClick={onSubmit} className="save-button-task" disabled={!form.formState.isDirty}>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    void onSubmit();
+                  }}
+                  className="save-button-task"
+                  disabled={!form.formState.isDirty}
+                >
                   {taskUuid ? 'Done' : 'Save Task'}
                 </Button>
               </Box>

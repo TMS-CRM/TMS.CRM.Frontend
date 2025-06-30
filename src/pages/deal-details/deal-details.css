@@ -1,0 +1,109 @@
+.not-found-deals-log {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #7e92a2 !important;
+}
+
+.text-no-deals-found {
+  color: #7e92a2 !important;
+  font-weight: 500 !important;
+}
+
+.deal-page-container {
+  height: auto !important;
+}
+
+.avatar-deal-page {
+  height: 44px !important;
+  width: 44px !important;
+}
+
+.typography-deal-page {
+  color: #526477 !important;
+}
+
+.deal-details-address-container {
+  padding: 24px !important;
+  margin-left: -24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between;
+  background-color: #ffffff !important;
+}
+
+.deal-details-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 20px !important;
+}
+
+.button-actions-id-page {
+  color: #7e92a2 !important;
+  gap: 8px !important;
+  border: 1px solid #eaeef4 !important;
+  background-color: #ffffff !important;
+  border-radius: 50% !important;
+}
+
+.icon-deal-page {
+  width: 21px !important;
+  height: 21px !important;
+  padding: 15px !important;
+}
+
+.deal-info-container {
+  margin-right: 24px !important;
+}
+
+.deal-image-container {
+  display: flex !important;
+  justify-content: end !important;
+  align-self: start !important;
+}
+
+.deal-image-deal-page {
+  border-radius: 5% !important;
+  align-self: flex-end !important;
+}
+
+.deal-info-row {
+  display: flex;
+  margin-bottom: 40px;
+}
+
+.deal-info-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.special-instructions {
+  font-weight: 500 !important;
+  color: #526477 !important;
+  margin-top: 8px !important;
+}
+
+@media (max-width: 447px) {
+  .customer-details-deal-page {
+    padding: 16px !important;
+  }
+
+  .deal-image-container {
+    justify-content: center !important;
+  }
+  .deal-image-deal-page {
+    width: 100%;
+    height: 100%;
+  }
+
+  .deal-details-address-container {
+    padding: 14px !important;
+    margin-left: 0px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+}

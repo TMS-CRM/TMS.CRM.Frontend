@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { PeopleAltOutlined } from '@mui/icons-material';
@@ -9,7 +9,7 @@ import './customer-card.css';
 import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
-import type { Customers } from '../../types/customer';
+import type { Customer } from '../../types/customer';
 
 const EditIcon = <DriveFileRenameOutlineOutlinedIcon className="edit-icon-customer-card" />;
 
@@ -17,7 +17,7 @@ const CustomerCard: React.FC = () => {
   // const [customerUuid, setCustomerUuid] = useState<number | null>(null);
   const navigate = useNavigate();
 
-  const [customers, setCustomers] = useState<Customers[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page] = useState(0);
   const limit = 3;
@@ -88,7 +88,7 @@ const CustomerCard: React.FC = () => {
         </Box>
 
         <Box>
-          {customers.map((customer: Customers) => (
+          {customers.map((customer: Customer) => (
             <Fragment key={customer.uuid}>
               <Box
                 onClick={(): void => {

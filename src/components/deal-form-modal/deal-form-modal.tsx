@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -12,8 +10,8 @@ import '../../styles/modal.css';
 import './deal-form-modal.css';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import { type Deal, DealProgress, type DealProgressType, DealRoomAccess, type DealRoomAccessType, mockDeals } from '../../types/deal';
-import AlertSnackbar from '../alert-snackbar/alert-snackbar';
+import { api } from '../../services/api';
+import { DealProgress, type DealProgressType, DealRoomAccess, type DealRoomAccessType } from '../../types/deal';
 import DatePickerController from '../form/date-picker-controller';
 import SelectController from '../form/select-controller';
 import TextFieldController from '../form/text-field-controller';
@@ -21,9 +19,10 @@ import TextFieldController from '../form/text-field-controller';
 interface DealModalProps {
   open: boolean;
   onClose: () => void;
+  onShowSnackbar?: (message: string, severity: 'saved' | 'deleted') => void;
   onChangeCustomerRequested?: () => void;
-  customerId?: number; // Used when creating a new deal
-  dealId?: number; // Used when editing an existing deal
+  customerUuid?: number; // Used when creating a new deal
+  dealUuid?: number; // Used when editing an existing deal
 }
 
 interface Address {
@@ -34,7 +33,7 @@ interface Address {
 }
 
 interface FormValues {
-  customerId: number;
+  customerUuid: number;
   address: Address;
   roomArea: number;
   numberOfPeople: number;
@@ -46,22 +45,14 @@ interface FormValues {
 }
 
 const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
-  // const customer: Customer | undefined = mockCustomers.find((cust) => cust.id === props.customerId);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const dealUuid = props.dealUuid;
 
   const [fileName, setFileName] = useState('');
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
-
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
-    const file = event.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
-    }
-  }
 
   const schema = yup.object().shape({
-    customerId: yup.number().required('Customer is required'),
+    customerUuid: yup.number().required('Customer is required'),
     address: yup.object().shape({
       street: yup.string().required('Street is required'),
       city: yup.string().required('City is required'),
@@ -70,7 +61,7 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
     }),
     roomArea: yup.number().required('Room area is required'),
     numberOfPeople: yup.number().required('Number of people is required'),
-    appointmentDate: yup.date().required('Appointment date is required'),
+    appointmentDate: yup.date().nullable().required('Appointment date is required'),
     specialInstructions: yup.string().required('Special instructions are required'),
     roomAccess: yup
       .mixed<DealRoomAccessType>()
@@ -84,7 +75,7 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
   const form = useForm<FormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
-      customerId: props.customerId ?? undefined,
+      customerUuid: props.customerUuid ?? undefined,
       address: { street: undefined, city: undefined, state: undefined, zipCode: undefined },
       roomArea: undefined,
       numberOfPeople: undefined,
@@ -97,55 +88,90 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
   });
 
   useEffect(() => {
-    console.log('dealId', props.dealId);
+    if (dealUuid && props.open) {
+      async function fetchDeal(): Promise<void> {
+        try {
+          setIsLoading(true);
+          const response = await api.get(`/deals/${dealUuid}`);
+          const responseData = response.data.data;
 
-    if (props.dealId) {
-      const deal: Deal | undefined = mockDeals.find((deal) => deal.id === props.dealId);
-      console.log(deal?.appointmentDate);
+          // console.log('task fetched', response.data.data);
 
-      if (!deal) {
-        return;
+          form.reset({
+            customerUuid: responseData.customerUuid,
+            address: {
+              street: responseData.street,
+              city: responseData.city,
+              state: responseData.state,
+              zipCode: responseData.zipCode,
+            },
+            roomArea: responseData.roomArea,
+            numberOfPeople: responseData.numberOfPeople,
+            appointmentDate: new Date(responseData.appointmentDate as string),
+            specialInstructions: responseData.specialInstructions,
+            roomAccess: responseData.roomAccess,
+            price: responseData.price,
+            progress: responseData.progress,
+          } as FormValues);
+        } catch (error) {
+          console.error('Failed to fetch task', error);
+        } finally {
+          setIsLoading(false);
+        }
       }
 
+      void fetchDeal();
+    } else {
       form.reset({
-        customerId: deal.customerId,
-        address: {
-          street: deal.street,
-          city: deal.city,
-          state: deal.state,
-          zipCode: deal.zipCode,
-        },
-        roomArea: deal.roomArea,
-        numberOfPeople: deal.numberOfPeople,
-        appointmentDate: new Date(deal.appointmentDate),
-        specialInstructions: deal.specialInstructions,
-        roomAccess: deal.roomAccess,
-        price: deal.price,
-        progress: deal.progress,
+        customerUuid: props.customerUuid ?? undefined,
+        address: { street: undefined, city: undefined, state: undefined, zipCode: undefined },
+        roomArea: undefined,
+        numberOfPeople: undefined,
+        appointmentDate: undefined,
+        specialInstructions: undefined,
+        roomAccess: 'keysWithDoorman',
+        price: undefined,
+        progress: 'inProgress',
       });
     }
-  }, [props.customerId, props.dealId, form]);
+  }, [dealUuid, form, props.customerUuid, props.open]);
 
-  function onSubmit(): () => void {
-    return form.handleSubmit((): void => {
+  const onSubmit = form.handleSubmit(async (formData) => {
+    console.log('FormData', formData);
+    try {
+      if (dealUuid) {
+        return;
+      } else {
+        await api.post('/tasks', formData);
+      }
+
       form.reset();
+
       props.onClose();
-      setSnackbarMessage('Deal Saved');
-      setSnackbarSeverity('saved');
-      setSnackbarOpen(true);
-    });
+
+      props.onShowSnackbar?.('Deal Saved', 'saved');
+    } catch (error) {
+      console.error('Error saving deal:', error);
+      props.onShowSnackbar?.('Failed to save deal', 'deleted');
+    }
+  });
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+    }
   }
 
   function handleCancel(): void {
-    setFileName('');
     form.reset();
     if (props.open) {
       props.onClose();
     }
   }
 
-  function handleSnackbarClose(): void {
-    setSnackbarOpen(false);
+  if (isLoading) {
+    return <Typography sx={{ p: 4 }}>Loading deal...</Typography>;
   }
 
   return (
@@ -160,22 +186,22 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
         >
           <Box className="form-title">
             <Typography variant="h5" className="title-header-modal">
-              {props.dealId ? 'Edit Deal' : 'Add New Deal'}
+              {props.dealUuid ? 'Edit Deal' : 'Add New Deal'}
             </Typography>
             <Button endIcon={<CancelIcon className="close-icon" />} onClick={handleCancel} />
           </Box>
 
           <FormProvider {...form}>
-            {!props.dealId && (
+            {!props.dealUuid && (
               <Grid container spacing={3} className="customer-box-new-deal">
                 <Grid size={{ xs: 3, sm: 1.5, md: 1.5 }}>
-                  {/* <Image
-                    src={customer?.avatar || '/placeholder-avatar.jpg'}
+                  <img
+                    // src={customer?.avatar ?? '/placeholder-avatar.jpg'}
                     alt="Customer picture"
                     width={44}
                     height={44}
                     className="deal-picture-new-deal"
-                  /> */}
+                  />
                 </Grid>
                 <Grid size={{ xs: 9, sm: 6.5, md: 6.5 }}>
                   <Typography variant="body2">{'Customer'}</Typography>
@@ -294,14 +320,22 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 6 }} className="actions-button">
-                  {!props.dealId && (
+                  {!props.dealUuid && (
                     <Button onClick={handleCancel} variant="outlined" className="cancel-button">
                       Cancel
                     </Button>
                   )}
 
-                  <Button variant="contained" color="primary" className="save-button" onClick={onSubmit} disabled={!form.formState.isDirty}>
-                    {props.dealId ? 'Done' : 'Save Deal'}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    className="save-button"
+                    onClick={() => {
+                      void onSubmit();
+                    }}
+                    disabled={!form.formState.isDirty}
+                  >
+                    {props.dealUuid ? 'Done' : 'Save Deal'}
                   </Button>
                 </Grid>
               </Grid>
@@ -309,7 +343,6 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
           </FormProvider>
         </Box>
       </Modal>
-      <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={handleSnackbarClose} />
     </>
   );
 };

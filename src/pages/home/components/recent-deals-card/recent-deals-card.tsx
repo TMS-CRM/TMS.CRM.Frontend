@@ -3,22 +3,42 @@ import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import './recent-deals-card.css';
 import { useNavigate } from 'react-router-dom';
-import { type Deal, mockDeals } from '../../types/deal';
+import { api } from '../../../../services/api';
+import { type Deal } from '../../../../types/deal';
 
 const RecentDealsCard: React.FC = () => {
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(0);
+  const limit = 4;
+
   const navigate = useNavigate();
-  const [deal, setDeal] = useState<Deal | null>(null);
 
   useEffect(() => {
-    if (mockDeals.length > 0) {
-      const mostRecentDeal = mockDeals.reduce((prev, current) =>
-        new Date(prev.appointmentDate) > new Date(current.appointmentDate) ? prev : current,
-      );
-      setDeal(mostRecentDeal);
-    }
-  }, []);
+    void fetchDeals();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
-  if (!deal) {
+  async function fetchDeals(): Promise<void> {
+    try {
+      setIsLoading(true);
+      const response = await api.get<{ data: { items: Deal[]; total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
+      const responseData = response.data.data;
+      setDeals(responseData.items.slice(0, 4));
+    } catch (error) {
+      console.error('Error fetching deals:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  if (isLoading) {
+    return <Typography sx={{ p: 4 }}>Loading deal...</Typography>;
+  }
+
+  const hasDeal = deals.length > 0;
+
+  if (!hasDeal) {
     return (
       <Card
         className="card-recent-deals"
@@ -48,9 +68,9 @@ const RecentDealsCard: React.FC = () => {
           </Button>
         </Box>
 
-        {mockDeals.slice(0, 4).map((deal) => (
-          <Box className="deal-body-recent-deal" onClick={() => void navigate(`deal/${deal.id}`)} key={deal.id}>
-            {/* <Image src={deal.dealPicture} alt="Deal" width={44} height={44} style={{ borderRadius: '50%' }} /> */}
+        {deals.slice(0, 4).map((deal) => (
+          <Box className="deal-body-recent-deal" onClick={() => void navigate(`deal/${deal.uuid}`)} key={deal.uuid}>
+            <img src={deal.dealPicture} alt="Deal" width={44} height={44} style={{ borderRadius: '50%' }} />
 
             <Box className="details-body-recent-deal">
               <Box className="body-text-recent-deal">

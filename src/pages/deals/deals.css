@@ -1,0 +1,36 @@
+.not-found-deal-page {
+  display: flex;
+  align-items: center;
+  justify-content: centerS;
+  color: #7e92a2;
+  background-color: white;
+  padding: 24px;
+  margin-top: 34px;
+  align-items: start;
+  flex: 1;
+}
+
+.icon-not-found-page {
+  color: #7e92a2;
+  margin-right: 13px;
+}
+
+.status-button {
+  padding: 10px !important;
+  background-color: #ececfe !important;
+  color: #514ef3 !important;
+  text-transform: none !important;
+  font-size: 12px !important;
+  width: 100% !important;
+}
+
+@media (max-width: 447px) {
+  .customer-details-deal-page {
+    flex-direction: column;
+  }
+
+  .status-button {
+    padding: 8px !important;
+    font-size: 11px !important;
+  }
+}

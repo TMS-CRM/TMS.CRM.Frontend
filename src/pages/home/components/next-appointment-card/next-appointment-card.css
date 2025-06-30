@@ -19,6 +19,8 @@
 
 .card-next-appointment {
   background-color: #514ef3 !important;
+  display: flex !important;
+  flex-direction: column !important;
   position: relative;
   border-radius: 12px !important;
   border: none !important;

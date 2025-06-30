@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
+import logo from '../../assets/leaf.svg';
 import './sign-in.css';
 import TextFieldController from '../../components/form/text-field-controller';
 import { useAuth } from '../../hooks/use-auth';
@@ -32,7 +33,7 @@ const SignIn: React.FC = () => {
   const handleToggleVisibility = (): void => setShowPassword((prev) => !prev);
 
   const signInSchema = yup.object({
-    email: yup.string().email('Invalid email').required('Email is required'),
+    email: yup.string().required('Email is required'),
     password: yup.string().required('Password is required'),
   });
 
@@ -71,34 +72,39 @@ const SignIn: React.FC = () => {
     }
   }, [errorMessage, successMessage]);
 
-  // Submit do login
-  function onSubmitSignIn(): (event?: React.BaseSyntheticEvent) => Promise<void> {
-    return signInForm.handleSubmit(async (data): Promise<void> => {
-      setErrorMessage(null);
-      setSuccessMessage(null);
+  // Submit login
+  async function onSubmitSignIn(): Promise<void> {
+    console.log('sign-in');
+    console.log('formData', signInForm.getValues());
 
-      try {
-        const result = await signIn({ email: data.email, password: data.password });
+    // signInForm.handleSubmit(async (data): Promise<void> => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
-        if (result.success) {
-          void navigate('/');
-        } else if (result.session) {
-          setSession(result.session);
-          setEmail(data.email);
-          setErrorMessage('New password required to continue. Please define a new password.');
-        } else {
-          setErrorMessage('Invalid email or password');
-        }
-      } catch (error) {
-        setErrorMessage('Unexpected error during sign-in. Please try again.');
-        console.error(error);
+    try {
+      const data = signInForm.getValues();
+      const result = await signIn({ email: data.email, password: data.password });
+      console.log('SIGN IN RESULT', result);
+
+      if (result.success) {
+        void navigate('/');
+      } else if (result.session) {
+        setSession(result.session);
+        setEmail(data.email);
+        setErrorMessage('New password required to continue. Please define a new password.');
+      } else {
+        setErrorMessage('Invalid email or password');
       }
-    });
+    } catch (error) {
+      setErrorMessage('Unexpected error during sign-in. Please try again.');
+      console.error(error);
+    }
+    // });
   }
 
   // Submit para definir nova senha
-  function onSubmitDefinePassword(): () => Promise<void> {
-    return definePasswordForm.handleSubmit(async (data): Promise<void> => {
+  function onSubmitDefinePassword(): void {
+    definePasswordForm.handleSubmit(async (data): Promise<void> => {
       setErrorMessage(null);
       setSuccessMessage(null);
 
@@ -134,7 +140,7 @@ const SignIn: React.FC = () => {
       <Grid size={{ xs: 12, sm: 12, md: 8 }} className="left-panel">
         <div className="branding-container">
           <div className="crm-container">
-            {/* <Image src={logo} alt="Logo" className="logo-leaf" /> */}
+            <img src={logo} alt="Logo" className="logo-leaf" />
             <Typography className="text-CRM">CRM</Typography>
           </div>
 
@@ -153,39 +159,43 @@ const SignIn: React.FC = () => {
             <Paper elevation={3} className="grid-container-sign-in">
               {!session ? (
                 <FormProvider {...signInForm} key="sign-in">
-                  <form onSubmit={onSubmitSignIn}>
-                    <Typography variant="h4" className="title-login" color="primary">
-                      Sign In
-                    </Typography>
+                  <Typography variant="h4" className="title-login" color="primary">
+                    Sign In
+                  </Typography>
 
-                    <TextFieldController name="email" label="Email" type="email" />
-                    <TextFieldController
-                      name="password"
-                      label="Password"
-                      type={showPassword ? 'text' : 'password'}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton onClick={handleToggleVisibility} edge="end">
-                              {showPassword ? <Visibility /> : <VisibilityOff />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
+                  <TextFieldController name="email" label="Email" type="email" />
+                  <TextFieldController
+                    name="password"
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={handleToggleVisibility} edge="end">
+                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
 
-                    <Button
-                      type="submit"
-                      className="submit-button-sign-in"
-                      disabled={!signInForm.formState.isDirty || signInForm.formState.isSubmitting}
-                    >
-                      Sign In
-                    </Button>
-                  </form>
+                  <Button
+                    className="submit-button-sign-in"
+                    // disabled={!signInForm.formState.isDirty || signInForm.formState.isSubmitting}
+                    onClick={() => {
+                      void onSubmitSignIn();
+                    }}
+                  >
+                    Sign In
+                  </Button>
                 </FormProvider>
               ) : (
                 <FormProvider {...definePasswordForm} key="define-password">
-                  <form onSubmit={() => void onSubmitDefinePassword()}>
+                  <form
+                    onSubmit={() => {
+                      void onSubmitDefinePassword();
+                    }}
+                  >
                     <Typography variant="h4" className="title-login" color="primary">
                       Define your new password
                     </Typography>
@@ -223,6 +233,9 @@ const SignIn: React.FC = () => {
                       type="submit"
                       className="submit-button-sign-in"
                       disabled={!definePasswordForm.formState.isDirty || definePasswordForm.formState.isSubmitting}
+                      onClick={() => {
+                        console.log('Sign In Form Values:', signInForm.getValues());
+                      }}
                     >
                       Define Password
                     </Button>

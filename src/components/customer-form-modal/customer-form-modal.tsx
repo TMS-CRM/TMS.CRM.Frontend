@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Box from '@mui/material/Box';
@@ -16,18 +13,10 @@ import { api } from '../../services/api';
 import TextFieldController from '../form/text-field-controller';
 
 interface CustomerModalProps {
-  onShowSnackbar?: (message: string, severity: 'saved' | 'deleted') => void;
+  onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;
   open: boolean;
-  onClose: () => void;
-  onCustomerListChange?: () => void;
-  customerUuid?: number | null;
-}
-
-interface Address {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
+  onClose: (refresh: boolean) => void;
+  customerUuid: number | null;
 }
 
 interface FormValues {
@@ -35,18 +24,25 @@ interface FormValues {
   lastName: string;
   email: string;
   phone: string;
-  address: Address;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
 }
 
 const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalProps) => {
   const customerUuid = props.customerUuid;
 
   const [fileName, setFileName] = useState('');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
     if (file) {
       setFileName(file.name);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   }
 
@@ -55,12 +51,10 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
     lastName: yup.string().required('Last name is required'),
     email: yup.string().required('Email is required'),
     phone: yup.string().required('Phone is required'),
-    address: yup.object().shape({
-      street: yup.string().required('Street address is required'),
-      city: yup.string().required('City is required'),
-      state: yup.string().required('State is required'),
-      zipCode: yup.string().required('Zip code is required'),
-    }),
+    street: yup.string().required('Street address is required'),
+    city: yup.string().required('City is required'),
+    state: yup.string().required('State is required'),
+    zipCode: yup.string().required('Zip code is required'),
   });
 
   const form = useForm<FormValues>({
@@ -70,28 +64,31 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
       lastName: undefined,
       email: undefined,
       phone: undefined,
-      address: { street: undefined, city: undefined, state: undefined, zipCode: undefined },
+      street: undefined,
+      city: undefined,
+      state: undefined,
+      zipCode: undefined,
     },
   });
 
   function onSubmit(): void {
-    form.handleSubmit(async (formData) => {
+    void form.handleSubmit(async (formData) => {
       console.log('FormData', formData);
 
       try {
         if (!customerUuid) {
           await api.post('/customers', formData);
-          console.log(customerUuid);
         } else {
           return;
         }
 
         form.reset();
-        props.onClose();
-        props.onShowSnackbar?.('Customer Saved', 'saved');
+        props.onClose(true);
+
+        props.onShowSnackbar('Customer Saved', 'saved');
       } catch (error) {
         console.error('Error saving customer:', error);
-        props.onShowSnackbar?.('Failed to save customer', 'deleted');
+        props.onShowSnackbar('Failed to save customer', 'deleted');
       }
     })();
   }
@@ -99,13 +96,13 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
   function handleCancel(): void {
     form.reset();
     if (props.open) {
-      props.onClose();
+      props.onClose(false);
     }
   }
 
   return (
     <>
-      <Modal open={props.open} onClose={props.onClose}>
+      <Modal open={props.open} onClose={() => props.onClose(false)}>
         <Box
           className="box"
           sx={{
@@ -126,10 +123,25 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
                 <Typography variant="body1" className="label">
                   Avatar
                 </Typography>
+
+                {/* Avatar preview */}
+                <img
+                  src={previewUrl ?? defaultAvatar}
+                  alt="User Avatar"
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    marginBottom: '8px',
+                  }}
+                />
+
+                {/* Upload button */}
                 <label htmlFor="upload-image" style={{ cursor: 'pointer' }}>
                   <input id="upload-image" name="file" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
                   <Button variant="contained" component="span" className="upload-button">
-                    <span style={{ display: 'block' }}>{fileName || 'ADD'}</span>
+                    <span>{fileName || 'ADD'}</span>
                   </Button>
                 </label>
               </div>
@@ -169,16 +181,16 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
                       <Typography variant="body1" className="label">
                         Address
                       </Typography>
-                      <TextFieldController name="address.street" placeholder="Street Address" type="text" />
+                      <TextFieldController name="street" placeholder="Street Address" type="text" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 5 }}>
-                      <TextFieldController name="address.city" placeholder="City" type="text" />
+                      <TextFieldController name="city" placeholder="City" type="text" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <TextFieldController name="address.state" placeholder="State/Province" type="text" />
+                      <TextFieldController name="state" placeholder="State/Province" type="text" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <TextFieldController name="address.zipCode" placeholder="Zip Code" type="text" />
+                      <TextFieldController name="zipCode" placeholder="Zip Code" type="text" />
                     </Grid>
                   </Grid>
                 </Grid>
@@ -189,7 +201,7 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
                   <Button variant="outlined" onClick={handleCancel} className="cancel-button">
                     Cancel
                   </Button>
-                  <Button variant="contained" color="primary" onClick={onSubmit} className="save-button">
+                  <Button variant="contained" color="primary" onClick={onSubmit} className="save-button" disabled={!form.formState.isDirty}>
                     Save Customer
                   </Button>
                 </Grid>

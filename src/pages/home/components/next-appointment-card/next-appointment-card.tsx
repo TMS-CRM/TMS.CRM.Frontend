@@ -3,38 +3,59 @@ import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import './next-appointment-card.css';
 import { useNavigate } from 'react-router-dom';
-import { type Deal, mockDeals } from '../../types/deal';
-import DealFormModal from '../deal-form-modal/deal-form-modal';
-import SelectCustomerModal from '../select-customer-modal/select-customer-modal';
+import Background from '../../../../assets/background.png';
+import Dote from '../../../../assets/dote.png';
+import type { Deal } from '../../../../types/deal';
 
 const NextAppointmentCard: React.FC = () => {
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [deal, setDeal] = useState<Deal | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addNewDealOpen, setAddNewDealOpen] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
+  const [selectedCustomerUuid, setSelectedCustomerUuid] = useState<number | null>(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (mockDeals.length > 0) {
-      const mostRecentDeal = mockDeals.reduce((prev, current) =>
-        new Date(prev.appointmentDate) > new Date(current.appointmentDate) ? prev : current,
-      );
-      setDeal(mostRecentDeal);
+    // eslint-disable-next-line @typescript-eslint/require-await
+    async function fetchNextAppointment(): Promise<void> {
+      try {
+        setIsLoading(true);
+
+        // const response = await api.get<{ data: Deal[] }>('/deals?limit=1&offset=0');
+        // const deals = response.data.data;
+
+        // const now = new Date();
+
+        // const upcomingDeals = deals?.filter((deal) => new Date(deal.appointmentDate) > now);
+
+        // if (upcomingDeals.length > 0) {
+        //   const nextDeal = upcomingDeals.reduce((prev, current) =>
+        //     new Date(prev.appointmentDate) < new Date(current.appointmentDate) ? prev : current,
+        //   );
+
+        //   setDeal(nextDeal);
+        // } else {
+        //   setDeal(null);
+        // }
+      } catch (error) {
+        console.error('Failed to fetch upcoming appointments', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
+
+    void fetchNextAppointment();
   }, []);
+
+  if (isLoading) {
+    return <Typography sx={{ p: 4 }}>Loading deal...</Typography>;
+  }
 
   if (!deal) {
     return (
       <>
-        <Card
-          className="card-next-appointment"
-          // sx={{
-          //   height: { xs: 290, sm: 350, md: 400 },
-          //   display: 'flex',
-          //   flexDirection: 'column',
-          //   backgroundColor: '#514ef3',
-          // }}
-        >
+        <Card className="card-next-appointment">
           <CardContent
             sx={{
               flex: 1,
@@ -44,7 +65,6 @@ const NextAppointmentCard: React.FC = () => {
           >
             <Box className="box-content-not-found-next-appointment">
               <CalendarMonthOutlinedIcon className="icon-not-found-next-appointment" />
-              <Typography sx={{ alignItens: 'centre' }}>No upcoming appointments.</Typography>
             </Box>
           </CardContent>
 
@@ -53,6 +73,7 @@ const NextAppointmentCard: React.FC = () => {
               padding: 2,
               display: 'flex',
               justifyContent: 'center',
+              height: 'auto',
             }}
           >
             <Button className="add-new-deal-not-found-next-appointment" variant="contained" color="secondary" onClick={() => setIsModalOpen(true)}>
@@ -60,19 +81,19 @@ const NextAppointmentCard: React.FC = () => {
             </Button>
           </Box>
 
-          {/* <Image src={Background} alt="Background" width={300} height={300} className="bg-image-next-appointment" /> */}
+          <img src={Background} alt="Background" width={300} height={300} className="bg-image-next-appointment" />
         </Card>
 
-        <SelectCustomerModal
+        {/* <SelectCustomerModal
           open={!!isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onCustomerSelected={(customerId) => {
-            setSelectedCustomerId(customerId);
+          onCustomerSelected={(customerUuid) => {
+            setSelectedCustomerUuid(customerUuid);
             setIsModalOpen(false);
             setAddNewDealOpen(true);
           }}
         />
-        {selectedCustomerId && (
+        {selectedCustomerUuid && (
           <DealFormModal
             open={addNewDealOpen}
             onClose={() => {
@@ -82,28 +103,28 @@ const NextAppointmentCard: React.FC = () => {
               setAddNewDealOpen(false);
               setIsModalOpen(true);
             }}
-            customerId={selectedCustomerId}
+            customerUuid={selectedCustomerUuid}
           />
-        )}
+        )} */}
       </>
     );
   }
 
   function handleDealDetailsClick(e: React.MouseEvent): void {
     e.stopPropagation();
-    void navigate(`deal/${deal!.id}`);
+    void navigate(`deal/${deal!.uuid}`);
   }
 
   return (
-    <Card onClick={() => void navigate(`deal/${deal.id}`)} className="card-next-appointment">
+    <Card onClick={() => void navigate(`deal/${deal.uuid}`)} className="card-next-appointment">
       <CardContent>
         <Box className="header-card-next-appointment">
           <Typography variant="h5">Next Appointment</Typography>
-          {/* <Image className="dote" src={Dote} alt="dote" width={10} height={10} /> */}
+          <img className="dote" src={Dote} alt="dote" width={10} height={10} />
         </Box>
 
         <Box className="address-card-next-appointment">
-          {/* <Image src={deal.dealPicture} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} /> */}
+          <img src={deal.dealPicture} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
           <Box marginLeft={1.5} fontSize={14}>
             <Typography variant="body1" color="white">
               {deal.street}
@@ -168,7 +189,7 @@ const NextAppointmentCard: React.FC = () => {
           </Button>
         </Box>
 
-        {/* <Image src={Background} alt="Background" width={300} height={300} className="bg-image-next-appointment" /> */}
+        <img src={Background} alt="Background" width={300} height={300} className="bg-image-next-appointment" />
       </CardContent>
     </Card>
   );

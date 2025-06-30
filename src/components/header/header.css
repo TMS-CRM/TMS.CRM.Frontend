@@ -1,8 +1,7 @@
 .header-container {
   display: flex !important;
   align-items: center !important;
-  padding: 22px !important;
-  padding-right: 24px !important;
+  padding: 20px 24px !important;
 }
 
 .logo-header {
