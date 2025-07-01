@@ -1,10 +1,5 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import type { TextFieldProps } from '@mui/material';
-import { FormControl, FormHelperText, TextField } from '@mui/material';
+import { FormControl, TextField } from '@mui/material';
 import { Controller, useFormContext } from 'react-hook-form';
 import type { ErrorObject, TextFieldControllerProps } from '../../types/form';
 
@@ -34,7 +29,6 @@ const TextFieldController: React.FC<TextFieldControllerProps & TextFieldProps> =
               placeholder={props.placeholder}
               {...field}
             />
-            <FormHelperText error>{error?.message as React.ReactNode}</FormHelperText>
           </FormControl>
         );
       }}

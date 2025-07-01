@@ -73,7 +73,7 @@ const SignIn: React.FC = () => {
   }, [errorMessage, successMessage]);
 
   // Submit login
-  async function onSubmitSignIn(): Promise<void> {
+  async function onSubmitSignIn(data: SignInFormValues): Promise<void> {
     console.log('sign-in');
     console.log('formData', signInForm.getValues());
 
@@ -82,7 +82,6 @@ const SignIn: React.FC = () => {
     setSuccessMessage(null);
 
     try {
-      const data = signInForm.getValues();
       const result = await signIn({ email: data.email, password: data.password });
       console.log('SIGN IN RESULT', result);
 
@@ -103,36 +102,34 @@ const SignIn: React.FC = () => {
   }
 
   // Submit para definir nova senha
-  function onSubmitDefinePassword(): void {
-    definePasswordForm.handleSubmit(async (data): Promise<void> => {
-      setErrorMessage(null);
-      setSuccessMessage(null);
+  async function onSubmitDefinePassword(data: DefinePasswordFormValues): Promise<void> {
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
-      if (!session) {
-        setErrorMessage('Session expired, please login again.');
+    if (!session) {
+      setErrorMessage('Session expired, please login again.');
+      setSession(null);
+      return;
+    }
+
+    try {
+      const success = await definePassword({
+        email,
+        password: data.newPassword,
+        session,
+      });
+
+      if (success) {
+        definePasswordForm.reset();
         setSession(null);
-        return;
-      }
-
-      try {
-        const success = await definePassword({
-          email,
-          password: data.newPassword,
-          session,
-        });
-
-        if (success) {
-          definePasswordForm.reset();
-          setSession(null);
-          setEmail('');
-          setSuccessMessage('Password defined successfully. Please log in.');
-        } else {
-          setErrorMessage('Failed to define password. Please try again.');
-        }
-      } catch {
+        setEmail('');
+        setSuccessMessage('Password defined successfully. Please log in.');
+      } else {
         setErrorMessage('Failed to define password. Please try again.');
       }
-    });
+    } catch {
+      setErrorMessage('Failed to define password. Please try again.');
+    }
   }
 
   return (
@@ -181,65 +178,57 @@ const SignIn: React.FC = () => {
 
                   <Button
                     className="submit-button-sign-in"
-                    // disabled={!signInForm.formState.isDirty || signInForm.formState.isSubmitting}
-                    onClick={() => {
-                      void onSubmitSignIn();
-                    }}
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                    onClick={signInForm.handleSubmit(onSubmitSignIn)}
+                    disabled={!signInForm.formState.isDirty || signInForm.formState.isSubmitting}
                   >
                     Sign In
                   </Button>
                 </FormProvider>
               ) : (
                 <FormProvider {...definePasswordForm} key="define-password">
-                  <form
-                    onSubmit={() => {
-                      void onSubmitDefinePassword();
+                  <Typography variant="h4" className="title-login" color="primary">
+                    Define your new password
+                  </Typography>
+
+                  <TextFieldController
+                    name="newPassword"
+                    label="New Password"
+                    type={showPassword ? 'text' : 'password'}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={handleToggleVisibility} edge="end">
+                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
                     }}
+                  />
+                  <TextFieldController
+                    name="confirmPassword"
+                    label="Confirm Password"
+                    type={showPassword ? 'text' : 'password'}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={handleToggleVisibility} edge="end">
+                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+
+                  <Button
+                    type="submit"
+                    className="submit-button-sign-in"
+                    disabled={!definePasswordForm.formState.isDirty || definePasswordForm.formState.isSubmitting}
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                    onClick={definePasswordForm.handleSubmit(onSubmitDefinePassword)}
                   >
-                    <Typography variant="h4" className="title-login" color="primary">
-                      Define your new password
-                    </Typography>
-
-                    <TextFieldController
-                      name="newPassword"
-                      label="New Password"
-                      type={showPassword ? 'text' : 'password'}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton onClick={handleToggleVisibility} edge="end">
-                              {showPassword ? <Visibility /> : <VisibilityOff />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    <TextFieldController
-                      name="confirmPassword"
-                      label="Confirm Password"
-                      type={showPassword ? 'text' : 'password'}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton onClick={handleToggleVisibility} edge="end">
-                              {showPassword ? <Visibility /> : <VisibilityOff />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-
-                    <Button
-                      type="submit"
-                      className="submit-button-sign-in"
-                      disabled={!definePasswordForm.formState.isDirty || definePasswordForm.formState.isSubmitting}
-                      onClick={() => {
-                        console.log('Sign In Form Values:', signInForm.getValues());
-                      }}
-                    >
-                      Define Password
-                    </Button>
-                  </form>
+                    Define Password
+                  </Button>
                 </FormProvider>
               )}
             </Paper>

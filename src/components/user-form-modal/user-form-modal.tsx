@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import CancelIcon from '@mui/icons-material/Cancel';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -93,7 +89,6 @@ const NewUserModal: React.FC<NewUserModalProps> = ({ open, onClose }) => {
           className="box"
           sx={{
             width: { xs: 300, sm: 480, md: 500 },
-            maxHeight: '90vh',
           }}
         >
           <Box className="form-title">

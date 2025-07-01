@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { Box, Button, Modal, Typography } from '@mui/material';
@@ -21,20 +18,16 @@ interface DealModalProps {
   onClose: () => void;
   onShowSnackbar?: (message: string, severity: 'saved' | 'deleted') => void;
   onChangeCustomerRequested?: () => void;
-  customerUuid?: number; // Used when creating a new deal
-  dealUuid?: number; // Used when editing an existing deal
+  customerUuid?: string;
+  dealUuid?: string;
 }
 
-interface Address {
+interface FormValues {
+  customerUuid: string;
   street: string;
   city: string;
   state: string;
   zipCode: number;
-}
-
-interface FormValues {
-  customerUuid: number;
-  address: Address;
   roomArea: number;
   numberOfPeople: number;
   appointmentDate: Date;
@@ -52,13 +45,11 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
   const [fileName, setFileName] = useState('');
 
   const schema = yup.object().shape({
-    customerUuid: yup.number().required('Customer is required'),
-    address: yup.object().shape({
-      street: yup.string().required('Street is required'),
-      city: yup.string().required('City is required'),
-      state: yup.string().required('State is required'),
-      zipCode: yup.number().required('Zip code is required'),
-    }),
+    customerUuid: yup.string().required('Customer is required'),
+    street: yup.string().required('Street is required'),
+    city: yup.string().required('City is required'),
+    state: yup.string().required('State is required'),
+    zipCode: yup.number().required('Zip code is required'),
     roomArea: yup.number().required('Room area is required'),
     numberOfPeople: yup.number().required('Number of people is required'),
     appointmentDate: yup.date().nullable().required('Appointment date is required'),
@@ -76,7 +67,10 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
     resolver: yupResolver(schema),
     defaultValues: {
       customerUuid: props.customerUuid ?? undefined,
-      address: { street: undefined, city: undefined, state: undefined, zipCode: undefined },
+      street: undefined,
+      city: undefined,
+      state: undefined,
+      zipCode: undefined,
       roomArea: undefined,
       numberOfPeople: undefined,
       appointmentDate: undefined,
@@ -88,53 +82,62 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
   });
 
   useEffect(() => {
-    if (dealUuid && props.open) {
-      async function fetchDeal(): Promise<void> {
-        try {
-          setIsLoading(true);
-          const response = await api.get(`/deals/${dealUuid}`);
-          const responseData = response.data.data;
-
-          // console.log('task fetched', response.data.data);
-
-          form.reset({
-            customerUuid: responseData.customerUuid,
-            address: {
-              street: responseData.street,
-              city: responseData.city,
-              state: responseData.state,
-              zipCode: responseData.zipCode,
-            },
-            roomArea: responseData.roomArea,
-            numberOfPeople: responseData.numberOfPeople,
-            appointmentDate: new Date(responseData.appointmentDate as string),
-            specialInstructions: responseData.specialInstructions,
-            roomAccess: responseData.roomAccess,
-            price: responseData.price,
-            progress: responseData.progress,
-          } as FormValues);
-        } catch (error) {
-          console.error('Failed to fetch task', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      void fetchDeal();
-    } else {
+    if (props.open && props.customerUuid) {
       form.reset({
-        customerUuid: props.customerUuid ?? undefined,
-        address: { street: undefined, city: undefined, state: undefined, zipCode: undefined },
-        roomArea: undefined,
-        numberOfPeople: undefined,
-        appointmentDate: undefined,
-        specialInstructions: undefined,
-        roomAccess: 'keysWithDoorman',
-        price: undefined,
-        progress: 'inProgress',
+        ...form.getValues(),
+        customerUuid: props.customerUuid,
       });
     }
-  }, [dealUuid, form, props.customerUuid, props.open]);
+  }, [props.open, props.customerUuid]);
+
+  // useEffect(() => {
+  //   if (dealUuid && props.open) {
+  //     async function fetchDeal(): Promise<void> {
+  //       try {
+  //         setIsLoading(true);
+  //         const response = await api.get(`/deals/${dealUuid}`);
+  //         const responseData = response.data.data;
+
+  //         // console.log('task fetched', response.data.data);
+
+  //         form.reset({
+  //           customerUuid: responseData.customerUuid,
+  //           address: {
+  //             street: responseData.street,
+  //             city: responseData.city,
+  //             state: responseData.state,
+  //             zipCode: responseData.zipCode,
+  //           },
+  //           roomArea: responseData.roomArea,
+  //           numberOfPeople: responseData.numberOfPeople,
+  //           appointmentDate: new Date(responseData.appointmentDate as string),
+  //           specialInstructions: responseData.specialInstructions,
+  //           roomAccess: responseData.roomAccess,
+  //           price: responseData.price,
+  //           progress: responseData.progress,
+  //         } as FormValues);
+  //       } catch (error) {
+  //         console.error('Failed to fetch task', error);
+  //       } finally {
+  //         setIsLoading(false);
+  //       }
+  //     }
+
+  //     void fetchDeal();
+  //   } else {
+  //     form.reset({
+  //       customerUuid: props.customerUuid ?? undefined,
+  //       address: { street: undefined, city: undefined, state: undefined, zipCode: undefined },
+  //       roomArea: undefined,
+  //       numberOfPeople: undefined,
+  //       appointmentDate: undefined,
+  //       specialInstructions: undefined,
+  //       roomAccess: 'keysWithDoorman',
+  //       price: undefined,
+  //       progress: 'inProgress',
+  //     });
+  //   }
+  // }, [dealUuid, form, props.customerUuid, props.open]);
 
   const onSubmit = form.handleSubmit(async (formData) => {
     console.log('FormData', formData);
@@ -142,7 +145,7 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
       if (dealUuid) {
         return;
       } else {
-        await api.post('/tasks', formData);
+        await api.post('/deals', formData);
       }
 
       form.reset();
@@ -181,7 +184,6 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
           className="box"
           sx={{
             width: { xs: 300, sm: 520, md: 620 },
-            maxHeight: '90vh',
           }}
         >
           <Box className="form-title">

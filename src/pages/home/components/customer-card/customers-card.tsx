@@ -8,8 +8,9 @@ import { Avatar, Box, Button, Card, CardContent, Typography } from '@mui/materia
 import './customer-card.css';
 import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../services/api';
-import type { Customer } from '../../types/customer';
+import EmptyState from '../../../../components/empty-state/empty-state';
+import { api } from '../../../../services/api';
+import type { Customer } from '../../../../types/customer';
 
 const EditIcon = <DriveFileRenameOutlineOutlinedIcon className="edit-icon-customer-card" />;
 
@@ -42,7 +43,7 @@ const CustomerCard: React.FC = () => {
   }
 
   if (isLoading) {
-    return <Typography sx={{ p: 4 }}>Loading tasks...</Typography>;
+    return <EmptyState message={'Loading tasks...'} />;
   }
 
   const hasCustomers = customers.length > 0;

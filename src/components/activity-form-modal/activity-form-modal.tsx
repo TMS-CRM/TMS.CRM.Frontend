@@ -107,7 +107,6 @@ const ActivityModal: React.FC<ActivityFormModalProps> = (props: ActivityFormModa
           className="box"
           sx={{
             width: { xs: 280, sm: 350, md: 400 },
-            maxHeight: '90vh',
           }}
         >
           <Box className="form-title">

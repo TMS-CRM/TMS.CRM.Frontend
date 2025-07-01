@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import AuthenticatedLayout from './components/authenticated-layout/authenticated-layout';
-// import DealDetails from './pages/deal-details/deal-details';
+import CustomerDetails from './pages/customer-details/customer-details';
 import Customers from './pages/customers/customers';
 import Deals from './pages/deals/deals';
 import Home from './pages/home/home';
@@ -17,6 +17,8 @@ export default function App(): JSX.Element {
         <Route path="/deals" element={<Deals />} />
         {/* <Route path="/deal-details" element={<DealDetails />} /> */}
         <Route path="/customers" element={<Customers />} />
+        <Route path="/customer-details/:uuid" element={<CustomerDetails />} />
+
         {/* <Route path="/task" element={<Task />} /> */}
         {/* <Route path="/user" element={<User />} /> */}
       </Route>

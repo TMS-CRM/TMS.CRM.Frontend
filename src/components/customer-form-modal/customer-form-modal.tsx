@@ -13,8 +13,8 @@ import { api } from '../../services/api';
 import TextFieldController from '../form/text-field-controller';
 
 interface CustomerModalProps {
-  onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;
   open: boolean;
+  onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;
   onClose: (refresh: boolean) => void;
   customerUuid: number | null;
 }
@@ -107,7 +107,6 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
           className="box"
           sx={{
             width: { xs: 300, sm: 520, md: 620 },
-            maxHeight: '90vh',
           }}
         >
           <Box className="form-title">

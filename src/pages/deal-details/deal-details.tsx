@@ -14,7 +14,6 @@ import DealModal from '../../components/deal-form-modal/deal-form-modal';
 import { useHeader } from '../../hooks/use-header';
 import type { Customer } from '../../types/customer';
 import type { Deal } from '../../types/deal';
-import { api } from '@/services/api';
 
 import '../deals-details.css';
 import './page.css';
@@ -39,7 +38,7 @@ export default function Page(): React.ReactElement {
   async function fetchCustomer() {
     try {
       setIsLoading(true);
-      const response = await api.get(`/tasks?limit=${limit}&offset=${page * limit}`);
+      // const response = await api.get(`/tasks?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
 
       setTasks((prevTasks) => (page === 0 ? responseData.items : [...prevTasks, ...responseData.items]));

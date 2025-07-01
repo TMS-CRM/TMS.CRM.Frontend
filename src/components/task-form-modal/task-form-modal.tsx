@@ -140,7 +140,6 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
           className="box"
           sx={{
             width: { xs: 290, sm: 350, md: 400 },
-            maxHeight: '90vh',
           }}
         >
           <Box className="form-title">

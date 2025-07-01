@@ -14,7 +14,7 @@ export type DealProgressType = keyof typeof DealProgress;
 export type DealRoomAccessType = keyof typeof DealRoomAccess;
 
 export type Deal = {
-  uuid: number;
+  uuid: string;
   dealPicture: string;
   street: string;
   city: string;
