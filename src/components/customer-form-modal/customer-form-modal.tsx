@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Box from '@mui/material/Box';
@@ -16,7 +17,7 @@ interface CustomerModalProps {
   open: boolean;
   onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;
   onClose: (refresh: boolean) => void;
-  customerUuid: number | null;
+  customerUuid: string | null;
 }
 
 interface FormValues {
@@ -71,26 +72,24 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
     },
   });
 
-  function onSubmit(): void {
-    void form.handleSubmit(async (formData) => {
-      console.log('FormData', formData);
+  async function onSubmit(formData: FormValues): Promise<void> {
+    console.log('FormData', formData);
 
-      try {
-        if (!customerUuid) {
-          await api.post('/customers', formData);
-        } else {
-          return;
-        }
-
-        form.reset();
-        props.onClose(true);
-
-        props.onShowSnackbar('Customer Saved', 'saved');
-      } catch (error) {
-        console.error('Error saving customer:', error);
-        props.onShowSnackbar('Failed to save customer', 'deleted');
+    try {
+      if (!customerUuid) {
+        await api.post('/customers', formData);
+      } else {
+        return;
       }
-    })();
+
+      form.reset();
+      props.onClose(true);
+
+      props.onShowSnackbar('Customer Saved', 'saved');
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      props.onShowSnackbar('Failed to save customer', 'deleted');
+    }
   }
 
   function handleCancel(): void {
@@ -200,7 +199,13 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
                   <Button variant="outlined" onClick={handleCancel} className="cancel-button">
                     Cancel
                   </Button>
-                  <Button variant="contained" color="primary" onClick={onSubmit} className="save-button" disabled={!form.formState.isDirty}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={form.handleSubmit(onSubmit)}
+                    className="save-button"
+                    disabled={!form.formState.isDirty}
+                  >
                     Save Customer
                   </Button>
                 </Grid>

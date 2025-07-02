@@ -1,72 +1,70 @@
-'use client';
-
-import React from 'react';
-import { useState } from 'react';
-import { Box, Button, Container, Typography } from '@mui/material';
-import '../../../../styles/modal.css';
-import './activity-form-card.css';
-import AlertSnackbar from '@/components/alert-snackbar/alert-snackbar';
-import DatePickerController from '../../../../components/form/date-picker-controller';
-import { FormProvider, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import { Box, Button, Container, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import TextFieldController from '@/components/form/text-field-controller';
+import { useState } from 'react';
+import '../../styles/modal.css';
+import './activity-form-card.css';
+import { FormProvider, useForm } from 'react-hook-form';
+import { useParams } from 'react-router-dom';
+import * as yup from 'yup';
+import { api } from '../../services/api';
+import DatePickerController from '../form/date-picker-controller';
+import TextFieldController from '../form/text-field-controller';
 
 interface FormValues {
   description: string;
-  activityDate: Date;
-  // image: string;
+  date: Date;
+  dealUuid: string;
 }
 
 interface ActivityFormCardProps {
-  onActivityCreated: () => void;
+  // onActivityCreated: () => void;
+  onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;
 }
 
-const ActivityFormCard: React.FC<ActivityFormCardProps> = ({ onActivityCreated }) => {
+const ActivityFormCard: React.FC<ActivityFormCardProps> = (props: ActivityFormCardProps) => {
   const [fileName, setFileName] = useState('');
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
+  const { uuid: dealUuid } = useParams();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
     if (file) {
       setFileName(file.name);
     }
-  };
+  }
 
   const schema = yup.object().shape({
+    dealUuid: yup.string().required('Deal is required'),
     description: yup.string().required('Task description is required'),
-    activityDate: yup.date().required('Due date is required'),
-    // image: yup.string(),
+    date: yup.date().nullable().required('Appointment date is required'),
   });
 
   const form = useForm<FormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
-      description: undefined,
-      activityDate: undefined,
-      // image: undefined,
+      description: '',
+      date: undefined,
+      dealUuid: dealUuid ?? undefined,
     },
   });
 
-  const onSubmit = form.handleSubmit((data) => {
-    console.log('Form submitted:', data);
-    form.reset();
-    setSnackbarMessage('Activity Saved');
-    setSnackbarSeverity('saved');
-    setSnackbarOpen(true);
-    onActivityCreated();
-  });
+  async function onSubmit(formData: FormValues): Promise<void> {
+    console.log('FormData', formData);
 
-  const handleCancel = () => {
-    form.reset();
-  };
+    try {
+      await api.post('/activities', formData);
 
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
+      form.reset();
+      props.onShowSnackbar('Activity Saved', 'saved');
+    } catch (error) {
+      console.error('Error saving activity:', error);
+      props.onShowSnackbar('Failed to save activity', 'deleted');
+    }
+  }
+
+  function handleCancel(): void {
+    form.reset();
+  }
 
   return (
     <>
@@ -87,7 +85,7 @@ const ActivityFormCard: React.FC<ActivityFormCardProps> = ({ onActivityCreated }
                 <TextFieldController name="description" type="text" multiline rows={2} placeholder="Write your notes" />
               </Grid>
               <Grid size={{ xs: 12, md: 12 }}>
-                <DatePickerController name="activityDate" />
+                <DatePickerController name="date" />
               </Grid>
 
               <Grid size={{ xs: 12, md: 12 }}>
@@ -106,7 +104,14 @@ const ActivityFormCard: React.FC<ActivityFormCardProps> = ({ onActivityCreated }
                 <Button aria-label="Cancel" onClick={handleCancel} variant="text" className="cancel-button">
                   Cancel
                 </Button>
-                <Button variant="contained" color="primary" className="save-button" onClick={onSubmit}>
+                <Button
+                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                  onClick={form.handleSubmit(onSubmit)}
+                  variant="contained"
+                  color="primary"
+                  className="save-button"
+                  disabled={!form.formState.isDirty}
+                >
                   Save
                 </Button>
               </Grid>
@@ -114,8 +119,6 @@ const ActivityFormCard: React.FC<ActivityFormCardProps> = ({ onActivityCreated }
           </FormProvider>
         </Box>
       </Container>
-
-      <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={handleSnackbarClose} />
     </>
   );
 };

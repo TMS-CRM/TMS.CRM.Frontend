@@ -8,14 +8,15 @@ import './deal-form-modal.css';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { api } from '../../services/api';
-import { DealProgress, type DealProgressType, DealRoomAccess, type DealRoomAccessType } from '../../types/deal';
+import type { Customer } from '../../types/customer';
+import { type Deal, DealProgress, type DealProgressType, DealRoomAccess, type DealRoomAccessType, type DealWithCustomer } from '../../types/deal';
 import DatePickerController from '../form/date-picker-controller';
 import SelectController from '../form/select-controller';
 import TextFieldController from '../form/text-field-controller';
 
 interface DealModalProps {
   open: boolean;
-  onClose: () => void;
+  onClose: (refresh: boolean) => void;
   onShowSnackbar?: (message: string, severity: 'saved' | 'deleted') => void;
   onChangeCustomerRequested?: () => void;
   customerUuid?: string;
@@ -27,7 +28,7 @@ interface FormValues {
   street: string;
   city: string;
   state: string;
-  zipCode: number;
+  zipCode: string;
   roomArea: number;
   numberOfPeople: number;
   appointmentDate: Date;
@@ -39,34 +40,47 @@ interface FormValues {
 
 const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [customer, setCustomer] = useState<Customer | null>(null);
 
   const dealUuid = props.dealUuid;
 
   const [fileName, setFileName] = useState('');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
+  const defaultImage = 'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg';
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  }
 
   const schema = yup.object().shape({
     customerUuid: yup.string().required('Customer is required'),
+    price: yup.number().required('Price is required'),
     street: yup.string().required('Street is required'),
     city: yup.string().required('City is required'),
     state: yup.string().required('State is required'),
-    zipCode: yup.number().required('Zip code is required'),
+    zipCode: yup.string().required('Zip code is required'),
     roomArea: yup.number().required('Room area is required'),
     numberOfPeople: yup.number().required('Number of people is required'),
     appointmentDate: yup.date().nullable().required('Appointment date is required'),
+    progress: yup.mixed<DealProgressType>().oneOf(['Pending', 'InProgress', 'Closed'], 'Invalid progress option').required('Progress is required'),
     specialInstructions: yup.string().required('Special instructions are required'),
     roomAccess: yup
       .mixed<DealRoomAccessType>()
-      .oneOf(['keysObtained', 'keysNotRequired', 'keysWithDoorman'], 'Invalid room access option')
+      .oneOf(['KeysObtained', 'KeysNotRequired', 'KeysWithDoorman', 'KeysInLockbox', 'Other'])
       .required('Room access is required'),
-    price: yup.number().required('Price is required'),
-    progress: yup.mixed<DealProgressType>().oneOf(['pending', 'inProgress', 'closed'], 'Invalid progress option').required('Progress is required'),
-    // imageUrl: yup.string(),
   });
 
   const form = useForm<FormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
       customerUuid: props.customerUuid ?? undefined,
+
       street: undefined,
       city: undefined,
       state: undefined,
@@ -75,101 +89,106 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
       numberOfPeople: undefined,
       appointmentDate: undefined,
       specialInstructions: undefined,
-      roomAccess: 'keysWithDoorman',
+      roomAccess: 'KeysWithDoorman',
       price: undefined,
-      progress: 'inProgress',
+      progress: 'InProgress',
     },
   });
 
   useEffect(() => {
-    if (props.open && props.customerUuid) {
-      form.reset({
-        ...form.getValues(),
-        customerUuid: props.customerUuid,
-      });
+    if (props.customerUuid) {
+      async function fetchCustomer(): Promise<void> {
+        try {
+          setIsLoading(true);
+          const response = await api.get<{ data: Customer }>(`/customers/${props.customerUuid}`);
+          const responseData = response.data.data;
+          setCustomer(responseData);
+
+          form.reset({ customerUuid: props.customerUuid });
+        } catch (error) {
+          console.error('Failed to fetch customer', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+
+      void fetchCustomer();
+    } else {
+      form.reset({});
     }
-  }, [props.open, props.customerUuid]);
+  }, [form, props.customerUuid]);
 
-  // useEffect(() => {
-  //   if (dealUuid && props.open) {
-  //     async function fetchDeal(): Promise<void> {
-  //       try {
-  //         setIsLoading(true);
-  //         const response = await api.get(`/deals/${dealUuid}`);
-  //         const responseData = response.data.data;
+  useEffect(() => {
+    if (dealUuid) {
+      async function fetchDeal(): Promise<void> {
+        try {
+          setIsLoading(true);
+          const response = await api.get<{ data: DealWithCustomer }>(`/deals/${dealUuid}`);
+          const responseData = response.data.data;
+          console.log('put', responseData);
 
-  //         // console.log('task fetched', response.data.data);
+          form.reset({
+            customerUuid: responseData.customer.uuid,
+            street: responseData.street,
+            city: responseData.city,
+            state: responseData.state,
+            zipCode: responseData.zipCode,
+            roomArea: responseData.roomArea,
+            numberOfPeople: responseData.numberOfPeople,
+            appointmentDate: responseData.appointmentDate ? new Date(responseData.appointmentDate) : undefined,
+            specialInstructions: responseData.specialInstructions,
+            roomAccess: responseData.roomAccess,
+            price: responseData.price,
+            progress: responseData.progress,
+          });
+        } catch (error) {
+          console.error('Failed to fetch customer', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
 
-  //         form.reset({
-  //           customerUuid: responseData.customerUuid,
-  //           address: {
-  //             street: responseData.street,
-  //             city: responseData.city,
-  //             state: responseData.state,
-  //             zipCode: responseData.zipCode,
-  //           },
-  //           roomArea: responseData.roomArea,
-  //           numberOfPeople: responseData.numberOfPeople,
-  //           appointmentDate: new Date(responseData.appointmentDate as string),
-  //           specialInstructions: responseData.specialInstructions,
-  //           roomAccess: responseData.roomAccess,
-  //           price: responseData.price,
-  //           progress: responseData.progress,
-  //         } as FormValues);
-  //       } catch (error) {
-  //         console.error('Failed to fetch task', error);
-  //       } finally {
-  //         setIsLoading(false);
-  //       }
-  //     }
+      void fetchDeal();
+    } else {
+      // form.reset({
+      //   // avatar: undefined,
+      //   firstName: undefined,
+      //   lastName: undefined,
+      //   email: undefined,
+      //   phone: undefined,
+      //   street: undefined,
+      //   city: undefined,
+      //   state: undefined,
+      //   zipCode: undefined,
+      // });
+    }
+  }, [dealUuid, form]);
 
-  //     void fetchDeal();
-  //   } else {
-  //     form.reset({
-  //       customerUuid: props.customerUuid ?? undefined,
-  //       address: { street: undefined, city: undefined, state: undefined, zipCode: undefined },
-  //       roomArea: undefined,
-  //       numberOfPeople: undefined,
-  //       appointmentDate: undefined,
-  //       specialInstructions: undefined,
-  //       roomAccess: 'keysWithDoorman',
-  //       price: undefined,
-  //       progress: 'inProgress',
-  //     });
-  //   }
-  // }, [dealUuid, form, props.customerUuid, props.open]);
-
-  const onSubmit = form.handleSubmit(async (formData) => {
-    console.log('FormData', formData);
+  async function onSubmit(formData: FormValues): Promise<void> {
     try {
       if (dealUuid) {
-        return;
+        await api.put(`/deals/${dealUuid}`, formData);
       } else {
+        // console.log('FormData', formData);
+        console.log('FormData', formData);
+
         await api.post('/deals', formData);
       }
 
       form.reset();
+      props.onClose(true);
 
-      props.onClose();
-
-      props.onShowSnackbar?.('Deal Saved', 'saved');
+      props.onShowSnackbar?.('Deals Saved', 'saved');
     } catch (error) {
       console.error('Error saving deal:', error);
       props.onShowSnackbar?.('Failed to save deal', 'deleted');
-    }
-  });
-
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
-    const file = event.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
     }
   }
 
   function handleCancel(): void {
     form.reset();
     if (props.open) {
-      props.onClose();
+      props.onClose(false);
     }
   }
 
@@ -197,17 +216,13 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
             {!props.dealUuid && (
               <Grid container spacing={3} className="customer-box-new-deal">
                 <Grid size={{ xs: 3, sm: 1.5, md: 1.5 }}>
-                  <img
-                    // src={customer?.avatar ?? '/placeholder-avatar.jpg'}
-                    alt="Customer picture"
-                    width={44}
-                    height={44}
-                    className="deal-picture-new-deal"
-                  />
+                  <img src={customer?.avatar ?? defaultAvatar} alt="Customer picture" width={44} height={44} className="deal-picture-new-deal" />
                 </Grid>
                 <Grid size={{ xs: 9, sm: 6.5, md: 6.5 }}>
                   <Typography variant="body2">{'Customer'}</Typography>
-                  <Typography variant="body1">{/* {customer?.firstName} {customer?.lastName} */}</Typography>
+                  <Typography variant="body1">
+                    {customer?.firstName} {customer?.lastName}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Button onClick={props.onChangeCustomerRequested} variant="outlined" color="secondary" className="change-customer-button-new-deal">
@@ -223,8 +238,23 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                 <Typography variant="body1" className="label">
                   Room Images
                 </Typography>
+
+                {/* Image preview */}
+                <img
+                  src={previewUrl ?? defaultImage}
+                  alt="User Avatar"
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    marginBottom: '8px',
+                  }}
+                />
+
+                {/* Upload button */}
                 <label htmlFor="upload-image" style={{ cursor: 'pointer' }}>
-                  <input id="upload-image" name="file" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                  <input id="upload-image" name="imageUrl" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
                   <Button variant="contained" component="span" className="upload-button">
                     <span style={{ display: 'block' }}>{fileName || 'ADD'}</span>
                   </Button>
@@ -236,16 +266,16 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                     <Typography variant="body1" className="label">
                       Address
                     </Typography>
-                    <TextFieldController name="address.street" placeholder="Street" type="text" />
+                    <TextFieldController name="street" placeholder="Street" type="text" />
                   </Grid>
                   <Grid size={{ xs: 12, md: 5 }}>
-                    <TextFieldController name="address.city" placeholder="City" type="text" />
+                    <TextFieldController name="city" placeholder="City" type="text" />
                   </Grid>
                   <Grid size={{ xs: 12, md: 4 }}>
-                    <TextFieldController name="address.state" placeholder="State/Province" type="text" />
+                    <TextFieldController name="state" placeholder="State/Province" type="text" />
                   </Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
-                    <TextFieldController name="address.zipCode" placeholder="Zip Code" type="text" />
+                    <TextFieldController name="zipCode" placeholder="Zip Code" type="string" />
                   </Grid>
                 </Grid>
 
@@ -283,9 +313,9 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                       name="roomAccess"
                       skeletonOnLoading
                       options={[
-                        { value: DealRoomAccess.keysWithDoorman.id, label: DealRoomAccess.keysWithDoorman.label },
-                        { value: DealRoomAccess.keysObtained.id, label: DealRoomAccess.keysObtained.label },
-                        { value: DealRoomAccess.keysNotRequired.id, label: DealRoomAccess.keysNotRequired.label },
+                        { value: DealRoomAccess.KeysWithDoorman.id, label: DealRoomAccess.KeysWithDoorman.label },
+                        { value: DealRoomAccess.KeysObtained.id, label: DealRoomAccess.KeysObtained.label },
+                        { value: DealRoomAccess.KeysNotRequired.id, label: DealRoomAccess.KeysNotRequired.label },
                       ]}
                     />
                   </Grid>
@@ -312,9 +342,9 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                         name="progress"
                         skeletonOnLoading
                         options={[
-                          { value: DealProgress.closed.id, label: DealProgress.closed.label },
-                          { value: DealProgress.inProgress.id, label: DealProgress.inProgress.label },
-                          { value: DealProgress.pending.id, label: DealProgress.pending.label },
+                          { value: DealProgress.Closed.id, label: DealProgress.Closed.label },
+                          { value: DealProgress.InProgress.id, label: DealProgress.InProgress.label },
+                          { value: DealProgress.Pending.id, label: DealProgress.Pending.label },
                         ]}
                       />
                     </Grid>
@@ -332,9 +362,8 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                     variant="contained"
                     color="primary"
                     className="save-button"
-                    onClick={() => {
-                      void onSubmit();
-                    }}
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                    onClick={form.handleSubmit(onSubmit)}
                     disabled={!form.formState.isDirty}
                   >
                     {props.dealUuid ? 'Done' : 'Save Deal'}

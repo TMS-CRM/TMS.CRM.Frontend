@@ -1,13 +1,30 @@
 export const DealProgress = {
-  inProgress: { id: 'inProgress', label: 'In progress' },
-  pending: { id: 'pending', label: 'Pending' },
-  closed: { id: 'closed', label: 'Closed' },
+  InProgress: { id: 'InProgress', label: 'In progress' },
+  Pending: { id: 'Pending', label: 'Pending' },
+  Closed: { id: 'Closed', label: 'Closed' },
 } as const;
 
 export const DealRoomAccess = {
-  keysWithDoorman: { id: 'keysWithDoorman', label: 'Keys with doorman' },
-  keysObtained: { id: 'keysObtained', label: 'Keys obtained' },
-  keysNotRequired: { id: 'keysNotRequired', label: 'Keys not required(customer present)' },
+  KeysWithDoorman: {
+    id: 'KeysWithDoorman',
+    label: 'Keys with Doorman',
+  },
+  KeysInLockbox: {
+    id: 'KeysInLockbox',
+    label: 'Keys in Lockbox',
+  },
+  KeysObtained: {
+    id: 'KeysObtained',
+    label: 'Keys Obtained',
+  },
+  KeysNotRequired: {
+    id: 'KeysNotRequired',
+    label: 'Keys Not Required',
+  },
+  Other: {
+    id: 'Other',
+    label: 'Other',
+  },
 };
 
 export type DealProgressType = keyof typeof DealProgress;
@@ -15,17 +32,41 @@ export type DealRoomAccessType = keyof typeof DealRoomAccess;
 
 export type Deal = {
   uuid: string;
-  dealPicture: string;
+  customerUuid: number;
+  imageUrl: string;
   street: string;
   city: string;
   state: string;
-  zipCode: number;
+  zipCode: string;
   roomArea: number;
   price: number;
   numberOfPeople: number;
   appointmentDate: string;
   progress: DealProgressType;
   specialInstructions: string;
-  customerUuid: number;
+  roomAccess: DealRoomAccessType;
+};
+
+export type DealWithCustomer = {
+  uuid: string;
+  customer: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    avatar: string;
+    phone: string;
+    uuid: string;
+  };
+  imageUrl: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  roomArea: number;
+  price: number;
+  numberOfPeople: number;
+  appointmentDate: string;
+  progress: DealProgressType;
+  specialInstructions: string;
   roomAccess: DealRoomAccessType;
 };

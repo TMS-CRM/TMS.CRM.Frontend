@@ -2,10 +2,12 @@ import AddIcon from '@mui/icons-material/Add';
 import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
 import DriveFileRenameOutlineOutlinedIcon from '@mui/icons-material/DriveFileRenameOutlineOutlined';
 import InsertPhotoIcon from '@mui/icons-material/InsertPhoto';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import { Backdrop, Button, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import './deals.css';
 import AlertSnackbar from '../../components/alert-snackbar/alert-snackbar';
 import DealFormModal from '../../components/deal-form-modal/deal-form-modal';
 import EmptyState from '../../components/empty-state/empty-state';
@@ -14,17 +16,17 @@ import SelectCustomerModal from '../../components/select-customer-modal/select-c
 import { useHeader } from '../../hooks/use-header';
 import { api } from '../../services/api';
 import type { Deal } from '../../types/deal';
-import './deals.css';
 
 const Deals: React.FC = () => {
   const { setTitle, setButton } = useHeader();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deals, setDeals] = useState<Deal[]>([]);
-  const [totalDeals, setTotalDeals] = useState<number>(0);
-  const [page, setPage] = useState<number>(0);
+  const hasDeal = deals.length > 0;
 
+  const [totalDeals, setTotalDeals] = useState<number>(0);
   const [selectedCustomerUuid, setSelectedCustomerUuid] = useState<string | null>(null);
   const [addNewDealOpen, setAddNewDealOpen] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(0);
 
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
@@ -32,26 +34,17 @@ const Deals: React.FC = () => {
 
   const limit = 10;
 
-  //Log
-  useEffect(() => {
-    console.log('selectedCustomerUuid:', selectedCustomerUuid);
-    console.log('addNewDealOpen:', addNewDealOpen);
-  }, [selectedCustomerUuid, addNewDealOpen]);
-
   // isLoading controls the UI display for loading state
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // modal fade transition loading
+  const [isLoadingModalTransition, setIsLoadingModalTransition] = useState(false);
 
   // isFetchingRef controls fetching state to avoid duplicates
-
   const isFetchingRef = useRef(false);
 
   const navigate = useNavigate();
 
   const location = useLocation();
-
-  useEffect(() => {
-    console.log('isModalOpen', isModalOpen);
-  }, [isModalOpen]);
 
   useEffect(() => {
     setTitle('Deals');
@@ -61,7 +54,6 @@ const Deals: React.FC = () => {
         variant="contained"
         endIcon={<AddIcon sx={{ color: 'white' }} />}
         onClick={() => {
-          console.log('Add New Deal button clicked');
           setIsModalOpen(true);
         }}
       >
@@ -91,11 +83,11 @@ const Deals: React.FC = () => {
   }, []);
 
   async function fetchDeals(currentPage: number): Promise<void> {
-    try {
-      if (isFetchingRef.current) {
-        return;
-      }
+    if (isFetchingRef.current) {
+      return;
+    }
 
+    try {
       isFetchingRef.current = true;
       setIsLoading(true);
 
@@ -108,6 +100,7 @@ const Deals: React.FC = () => {
       console.error('Error fetching deals:', error);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }
 
@@ -135,118 +128,125 @@ const Deals: React.FC = () => {
     { label: 'Edit', isRightAligned: true },
   ];
 
-  const hasDeal = deals.length > 0;
-
   return (
     <main>
-      {!hasDeal ? (
-        <EmptyState icon={<BusinessCenterOutlinedIcon />} message="No deals found." />
-      ) : (
-        <Grid container sx={{ padding: { xs: '12px', sm: '16px', md: '24px' } }}>
-          <Grid size={{ xs: 12, md: 12 }}>
-            <SectionHeader
-              title="Deals"
-              counter={totalDeals}
-              sortByValue={[
-                'Date Created (Newest First)',
-                'Date Created (Oldest First)',
-                'Alphabetic (A-Z)',
-                'Alphabetic (Z-A)',
-                'Price (High to Low)',
-                'Price (Low to High)',
-                'Area (Largest First)',
-                'Area (Smallest First)',
-                'Status',
-                'Appointment Date',
-              ]}
-              filterOptions={['Status', 'Date Range', 'Price Range', 'Area']}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 12 }}>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    {columnHeaders.map((header, index) => (
-                      <TableCell
-                        key={index}
-                        sx={{
-                          textAlign: header.isRightAligned ? 'right' : 'left',
-                        }}
-                      >
-                        {header.icon ?? header.label}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {deals.map((deal: Deal) => (
-                    <React.Fragment key={deal.uuid}>
-                      <TableRow
-                        onClick={() => handleDealClick(deal.uuid)}
-                        sx={{
-                          cursor: 'pointer',
-                          '&:hover': { backgroundColor: '#f9f9f9' },
-                        }}
-                      >
-                        <TableCell>
-                          <img src={deal.dealPicture} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
-                        </TableCell>
+      <Backdrop open={isLoadingModalTransition} sx={{ zIndex: 1500 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
 
-                        <TableCell>
-                          <Typography variant="caption">
-                            {deal.street}, {deal.city}, {deal.state}, {deal.zipCode}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption">{deal.roomArea} M&sup2;</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption">
-                            {new Date(deal.appointmentDate).toLocaleString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption">${deal.price}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="contained" className={`status-button ${deal.progress}`}>
-                            {deal.progress === 'inProgress' ? 'IN PROGRESS' : 'CLOSED'}
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          <Typography sx={{ textAlign: 'right' }}>
-                            <DriveFileRenameOutlineOutlinedIcon />
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    </React.Fragment>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <Button
-              variant="outlined"
-              disabled={isLoading || deals.length < totalDeals}
-              onClick={() => setPage((prevPage) => prevPage + 1)}
-              sx={{ marginTop: '16px', justifyContent: 'center', display: 'flex' }}
-            >
-              Load more
-            </Button>
+      <Grid container sx={{ padding: { xs: '12px', sm: '16px', md: '24px' } }}>
+        {isLoading && !hasDeal ? (
+          <Grid size={{ xs: 12 }} sx={{ textAlign: 'center', paddingTop: '150px' }}>
+            <CircularProgress size={40} />
           </Grid>
-        </Grid>
-      )}
+        ) : !hasDeal ? (
+          <EmptyState icon={<BusinessCenterOutlinedIcon />} message="No customers found." />
+        ) : (
+          <>
+            <Grid size={{ xs: 12, md: 12 }}>
+              <SectionHeader
+                title="Deals"
+                counter={totalDeals}
+                sortByValue={[
+                  'Date Created (Newest First)',
+                  'Date Created (Oldest First)',
+                  'Alphabetic (A-Z)',
+                  'Alphabetic (Z-A)',
+                  'Price (High to Low)',
+                  'Price (Low to High)',
+                  'Area (Largest First)',
+                  'Area (Smallest First)',
+                  'Status',
+                  'Appointment Date',
+                ]}
+                filterOptions={['Status', 'Date Range', 'Price Range', 'Area']}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 12 }}>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      {columnHeaders.map((header, index) => (
+                        <TableCell
+                          key={index}
+                          sx={{
+                            textAlign: header.isRightAligned ? 'right' : 'left',
+                          }}
+                        >
+                          {header.icon ?? header.label}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {deals.map((deal: Deal) => (
+                      <React.Fragment key={deal.uuid}>
+                        <TableRow
+                          onClick={() => handleDealClick(deal.uuid)}
+                          sx={{
+                            cursor: 'pointer',
+                            '&:hover': { backgroundColor: '#f9f9f9' },
+                          }}
+                        >
+                          <TableCell>
+                            <img src={deal.imageUrl} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
+                          </TableCell>
+
+                          <TableCell>
+                            <Typography variant="caption">
+                              {deal.street}, {deal.city}, {deal.state}, {deal.zipCode}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption">{deal.roomArea} M&sup2;</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption">
+                              {new Date(deal.appointmentDate).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption">${deal.price}</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="contained" className={`status-button ${deal.progress}`}>
+                              {deal.progress === 'InProgress' ? 'IN PROGRESS' : 'CLOSED'}
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <Typography sx={{ textAlign: 'right' }}>
+                              <DriveFileRenameOutlineOutlinedIcon />
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      </React.Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <Button
+                variant="outlined"
+                disabled={isLoading || deals.length >= totalDeals}
+                onClick={() => setPageAndRefresh(page + 1)}
+                sx={{ marginTop: '16px', justifyContent: 'center', display: 'flex' }}
+              >
+                Load more
+              </Button>
+            </Grid>
+          </>
+        )}
+      </Grid>
 
       <SelectCustomerModal
         open={isModalOpen}
         onClose={(refresh: boolean) => {
-          console.log('requested to close');
           setIsModalOpen(false);
           if (refresh) setPageAndRefresh(0);
         }}
@@ -258,16 +258,37 @@ const Deals: React.FC = () => {
         onCustomerSelected={(customerUuid) => {
           setSelectedCustomerUuid(customerUuid);
           setIsModalOpen(false);
-          setAddNewDealOpen(true);
+          setIsLoadingModalTransition(true); // show loading
+
+          setTimeout(() => {
+            setAddNewDealOpen(true);
+            setIsLoadingModalTransition(false);
+          }, 400); // can adjust duration here
         }}
       />
 
+      {/* Modal: Deal Form */}
       <DealFormModal
         open={addNewDealOpen}
-        onClose={() => setAddNewDealOpen(false)}
+        onClose={(refresh: boolean) => {
+          setAddNewDealOpen(false);
+          if (refresh) {
+            setPageAndRefresh(0);
+          }
+        }}
         onChangeCustomerRequested={() => {
           setAddNewDealOpen(false);
-          setIsModalOpen(true);
+          setIsLoadingModalTransition(true); // show loading
+
+          setTimeout(() => {
+            setIsModalOpen(true);
+            setIsLoadingModalTransition(false);
+          }, 400); // match delay to perceived transition
+        }}
+        onShowSnackbar={(message, severity) => {
+          setSnackbarMessage(message);
+          setSnackbarSeverity(severity);
+          setSnackbarOpen(true);
         }}
         customerUuid={selectedCustomerUuid ?? undefined}
       />

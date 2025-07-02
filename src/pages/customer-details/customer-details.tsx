@@ -20,7 +20,7 @@ import type { Customer } from '../../types/customer';
 import './customer-details.css';
 import CustomersPage from '../customers/customers';
 
-const DealDetails: React.FC = () => {
+const CustomerDetails: React.FC = () => {
   const { setTitle } = useHeader();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -110,7 +110,7 @@ const DealDetails: React.FC = () => {
     }
   }, [customerUuid, form]);
 
-  const onSubmit = async (formData: FormValues): Promise<void> => {
+  async function onSubmit(formData: FormValues): Promise<void> {
     console.log('FormData', formData);
 
     try {
@@ -129,7 +129,8 @@ const DealDetails: React.FC = () => {
       setSnackbarMessage('Failed to save customer');
       setSnackbarSeverity('deleted');
     }
-  };
+  }
+
   async function handleDelete(): Promise<void> {
     if (!customerUuid) return;
 
@@ -251,4 +252,4 @@ const DealDetails: React.FC = () => {
   );
 };
 
-export default DealDetails;
+export default CustomerDetails;
