@@ -1,14 +1,17 @@
 import { BusinessCenterOutlined, PeopleAltOutlined } from '@mui/icons-material';
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { Box, Button, Modal, Typography } from '@mui/material';
+import { Backdrop, Box, Button, CircularProgress, Divider, Modal, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import React, { useRef, useState } from 'react';
 import AddNewCustomer from '../customer-form-modal/customer-form-modal';
+import CustomerFormModal from '../customer-form-modal/customer-form-modal';
 import DealModal from '../deal-form-modal/deal-form-modal';
+import DealFormModal from '../deal-form-modal/deal-form-modal';
 import ModalSelectCustomer from '../select-customer-modal/select-customer-modal';
 import '../../styles/modal.css';
 import './add-new-modal.css';
+import SelectCustomerModal from '../select-customer-modal/select-customer-modal';
 
 interface AddNewFormProps {
   open: boolean;
@@ -16,111 +19,127 @@ interface AddNewFormProps {
 }
 
 const AddNewModal: React.FC<AddNewFormProps> = ({ open, onClose }) => {
-  const modalRef = useRef<HTMLDivElement>(null);
-  const [selectedCustomersOpen, setSelectedCustomersOpen] = useState(false);
-  const [addNewCustomerOpen, setAddNewCustomerOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [addNewDealOpen, setAddNewDealOpen] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
+  const [addNewCustomerOpen, setAddNewCustomerOpen] = useState(false);
+  const [selectCustomerOpen, setSelectCustomerOpen] = useState(false);
+  const [selectedCustomerUuid, setSelectedCustomerUuid] = useState<string | null>(null);
 
-  function openSelectCustomerModal(): void {
-    setSelectedCustomersOpen(true);
-    onClose();
-  }
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
 
-  function openAddNewCustomerModal(): void {
-    setAddNewCustomerOpen(true);
-    onClose();
-  }
-
-  // useEffect((): void => {
-  //   function handleClickOutside(event: MouseEvent): void {
-  //     if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-  //       onClose();
-  //     }
-  //   }
-
-  //   if (open) {
-  //     document.addEventListener('mousedown', handleClickOutside);
-  //   }
-
-  //   return (): void => {
-  //     document.removeEventListener('mousedown', handleClickOutside);
-  //   };
-  // }, [open, onClose]);
+  // modal fade transition loading
+  const [isLoadingModalTransition, setIsLoadingModalTransition] = useState(false);
 
   return (
     <>
-      <Modal open={open}>
+      <Backdrop open={isLoadingModalTransition} sx={{ zIndex: 1500 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
+      <Modal open={open} onClose={onClose}>
         <Box
-          ref={modalRef}
           className="box"
           sx={{
             width: { xs: 200, sm: 220, md: 240 },
           }}
         >
-          <Grid container className="form-title-add-new">
-            <Grid size={{ xs: 10, md: 10 }}>
+          <Box className="form-title-add-new">
+            <Box>
               <Typography variant="body2">Add New</Typography>
-            </Grid>
-            <Grid size={{ xs: 2, md: 2 }}>
+            </Box>
+            <Box>
               <Button endIcon={<CancelIcon className="close-icon" />} onClick={onClose} />
-            </Grid>
-          </Grid>
-          <Grid container className="content-box-add-new">
-            <Grid size={{ xs: 12, md: 12 }} onClick={openSelectCustomerModal} className="options-box-add-new">
-              <Grid container alignItems="center">
-                <Grid size={{ xs: 10, md: 11 }}>
-                  <Button variant="text" color="secondary" startIcon={<BusinessCenterOutlined className="option-icon-add-new" />}>
-                    Deals
-                  </Button>
-                </Grid>
-                <Grid size={{ xs: 2, md: 1 }} className="arrow-grid-add-new">
-                  <ArrowForwardOutlinedIcon className="arrow-icon" />
-                </Grid>
-              </Grid>
-            </Grid>
+            </Box>
+          </Box>
 
-            {/* <Box className="add-new-divider"></Box> */}
+          <Divider />
 
-            <Grid size={{ xs: 12, md: 12 }} onClick={openAddNewCustomerModal} className="options-box-add-new">
-              <Grid container alignItems="center">
-                <Grid size={{ xs: 10, md: 11 }}>
-                  <Button variant="text" color="secondary" startIcon={<PeopleAltOutlined className="option-icon-add-new" />}>
-                    Customers
-                  </Button>
-                </Grid>
-                <Grid size={{ xs: 2, md: 1 }} className="arrow-grid-add-new">
-                  <ArrowForwardOutlinedIcon className="arrow-icon" />
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
+          <Box onClick={() => setSelectCustomerOpen(true)} className="box-content-add-new">
+            <Box display="flex" alignItems="center" gap={1}>
+              <BusinessCenterOutlined className="icon-container " sx={{ color: '#7D8A99' }} />
+              <Typography fontWeight={500} color="text.primary" fontSize={14}>
+                Deal
+              </Typography>
+            </Box>
+            <ArrowForwardOutlinedIcon className="icon-container " sx={{ color: '#514EF3' }} />
+          </Box>
+
+          <Divider />
+
+          {/* Customer Option */}
+
+          <Box onClick={() => setAddNewCustomerOpen(true)} className="box-content-add-new">
+            <Box display="flex" alignItems="center" gap={1}>
+              <PeopleAltOutlined className="icon-container " sx={{ color: '#7D8A99' }} />
+              <Typography fontWeight={500} color="text.primary" fontSize={14}>
+                Customer
+              </Typography>
+            </Box>
+            <ArrowForwardOutlinedIcon className="icon-container " sx={{ color: '#514EF3' }} />
+          </Box>
         </Box>
       </Modal>
 
-      <AddNewCustomer open={addNewCustomerOpen} onClose={() => setAddNewCustomerOpen(false)} />
-      <ModalSelectCustomer
-        open={selectedCustomersOpen}
-        onClose={() => setSelectedCustomersOpen(false)}
-        onCustomerSelected={(customerId: number) => {
-          setSelectedCustomerId(customerId);
-          setAddNewDealOpen(true);
+      <SelectCustomerModal
+        open={selectCustomerOpen}
+        onClose={() => {
+          setSelectCustomerOpen(false);
+          setIsModalOpen(false);
+        }}
+        onShowSnackbar={(message, severity) => {
+          setSnackbarMessage(message);
+          setSnackbarSeverity(severity);
+          setSnackbarOpen(true);
+        }}
+        onCustomerSelected={(customerUuid) => {
+          setSelectedCustomerUuid(customerUuid);
+          setIsModalOpen(false);
+          setIsLoadingModalTransition(true);
+
+          setTimeout(() => {
+            setAddNewDealOpen(true);
+            setIsLoadingModalTransition(false);
+          }, 400);
         }}
       />
 
-      {selectedCustomerId && (
-        <DealModal
-          open={addNewDealOpen}
-          onClose={() => {
-            setAddNewDealOpen(false);
-          }}
-          onChangeCustomerRequested={() => {
-            setSelectedCustomersOpen(true);
-            setAddNewDealOpen(false);
-          }}
-          customerId={selectedCustomerId}
-        />
-      )}
+      {/* Modal: Deal Form */}
+      <DealFormModal
+        dealUuid={null}
+        open={addNewDealOpen}
+        onClose={() => {
+          setAddNewDealOpen(false);
+        }}
+        onChangeCustomerRequested={() => {
+          setAddNewDealOpen(false);
+          setIsLoadingModalTransition(true);
+
+          setSelectCustomerOpen(true);
+          setIsLoadingModalTransition(false);
+        }}
+        onShowSnackbar={(message, severity) => {
+          setSnackbarMessage(message);
+          setSnackbarSeverity(severity);
+          setSnackbarOpen(true);
+        }}
+        customerUuid={selectedCustomerUuid ?? undefined}
+      />
+
+      {/* Modal: Customer Form */}
+      <CustomerFormModal
+        open={addNewCustomerOpen}
+        customerUuid={null}
+        onClose={() => {
+          setAddNewCustomerOpen(false);
+        }}
+        onShowSnackbar={(message, severity) => {
+          setSnackbarMessage(message);
+          setSnackbarSeverity(severity);
+          setSnackbarOpen(true);
+        }}
+      />
     </>
   );
 };

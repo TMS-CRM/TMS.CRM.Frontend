@@ -15,8 +15,9 @@ import './header.css';
 const Header: React.FC = () => {
   const { button, title } = useHeader();
   const [selectedTenantId, setSelectedTenantId] = useState<number | null>(1);
-  const { signOut } = useAuth();
   const navigate = useNavigate();
+
+  const { signOut } = useAuth();
 
   const [opacity, setOpacity] = useState(1);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -36,7 +37,6 @@ const Header: React.FC = () => {
   }
 
   async function handleSignOut(): Promise<void> {
-    console.log('Signing out...');
     try {
       await signOut();
     } catch (error) {
@@ -49,57 +49,6 @@ const Header: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return (): void => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // function renderModal(): React.ReactNode {
-  //   switch (modalType) {
-  //     case HeaderModalType.newCustomer:
-  //       return <></>;
-  //     case HeaderModalType.newUser:
-  //       return <NewUserModal open={!!isModalOpen} onClose={() => setIsModalOpen(false)} />;
-  //     case HeaderModalType.newTask:
-  //       return (
-  //         <TaskModal
-  //           open={isModalOpen}
-  //           onClose={() => setIsModalOpen(false)}
-  //           taskUuid={null}
-  //           onShowSnackbar={(message, severity) => {
-  //             setSnackbarMessage(message);
-  //             setSnackbarSeverity(severity);
-  //             setSnackbarOpen(true);
-  //           }}
-  //         />
-  //       );
-  //     case HeaderModalType.newDeal:
-  //       return (
-  //         <>
-  //           <SelectCustomerModal
-  //             open={!!isModalOpen}
-  //             onClose={() => setIsModalOpen(false)}
-  //             onCustomerSelected={(customerId) => {
-  //               setSelectedCustomerId(customerId);
-  //               setIsModalOpen(false);
-  //               setAddNewDealOpen(true);
-  //             }}
-  //           />
-  //           {selectedCustomerId && (
-  //             <DealFormModal
-  //               open={addNewDealOpen}
-  //               onClose={() => {
-  //                 setAddNewDealOpen(false);
-  //               }}
-  //               onChangeCustomerRequested={() => {
-  //                 setAddNewDealOpen(false);
-  //                 setIsModalOpen(true);
-  //               }}
-  //               customerUuid={selectedCustomerId}
-  //             />
-  //           )}
-  //         </>
-  //       );
-  //     case HeaderModalType.generalAddNew:
-  //       return <AddNewModal open={!!isModalOpen} onClose={() => setIsModalOpen(false)} />;
-  //   }
-  // }
 
   function handleIconClick(): void {
     void navigate(`/`);
@@ -127,16 +76,6 @@ const Header: React.FC = () => {
 
           <Grid size={{ xs: 10, sm: 5, md: 5, lg: 5 }} className="header-actions">
             <>{button}</>
-            {/* {buttonTitle && (
-              <Button
-                className="add-new-header"
-                variant="contained"
-                endIcon={<AddIcon sx={{ color: 'white' }} />}
-                onClick={() => setIsModalOpen(true)}
-              >
-                {buttonTitle}
-              </Button>
-            )} */}
             <Search className="search-header" />
             <Avatar
               className="avatar-header"
@@ -180,9 +119,7 @@ const Header: React.FC = () => {
             </Button>
           </Grid>
         </Grid>
-        {/* {renderModal()} */}
       </AppBar>
-      {/* <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} /> */}
     </>
   );
 };

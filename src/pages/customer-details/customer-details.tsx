@@ -18,13 +18,15 @@ import { api } from '../../services/api';
 import type { Customer } from '../../types/customer';
 // import defaultAvatar from '../../../assets/default-avatar.png';
 import './customer-details.css';
-import CustomersPage from '../customers/customers';
 
 const CustomerDetails: React.FC = () => {
   const { setTitle } = useHeader();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fileName, setFileName] = useState('');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
+  const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
@@ -35,6 +37,14 @@ const CustomerDetails: React.FC = () => {
   useEffect(() => {
     setTitle('Customer Details');
   }, [setTitle]);
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  }
 
   const schema = yup
     .object({
@@ -111,12 +121,13 @@ const CustomerDetails: React.FC = () => {
   }, [customerUuid, form]);
 
   async function onSubmit(formData: FormValues): Promise<void> {
-    console.log('FormData', formData);
+    // console.log('FormData', formData);
 
     try {
       if (customerUuid) {
-        const result = await api.put<{ data: Customer }>(`/customers/${customerUuid}`, formData);
-        console.log('result', result);
+        setIsSubmitting(true);
+        await api.put<{ data: Customer }>(`/customers/${customerUuid}`, formData);
+        setIsSubmitting(false);
       } else {
         return;
       }
@@ -170,10 +181,30 @@ const CustomerDetails: React.FC = () => {
                       <Box position="absolute" top="80px" left="24px">
                         <Box position="relative" width={100} height={100}>
                           <Box className="avatar-box">
-                            <img alt="Profile Picture" width={100} height={100} className="profile-picture" />
+                            {/* Image preview */}
+                            <img
+                              className="profile-picture"
+                              src={previewUrl ?? defaultAvatar}
+                              alt="User Avatar"
+                              style={{
+                                width: '100px',
+                                height: '100px',
+                                // borderRadius: '50%',
+                                // objectFit: 'cover',
+                                // marginBottom: '8px',
+                              }}
+                            />
                           </Box>
 
                           <Button className="edit-button-customer-page">
+                            <input
+                              id="upload-image"
+                              name="file"
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileChange}
+                              style={{ display: 'none' }}
+                            />
                             <DriveFileRenameOutlineOutlinedIcon sx={{ width: 20, height: 20, color: 'white' }} />
                           </Button>
                         </Box>
@@ -232,7 +263,7 @@ const CustomerDetails: React.FC = () => {
                         className="save-button-customer-page"
                         disabled={!form.formState.isDirty}
                       >
-                        Save Customer
+                        {isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Save Customer'}
                       </Button>
                     </Grid>
                   </Grid>

@@ -1,7 +1,9 @@
 import AddIcon from '@mui/icons-material/Add';
+import { CircularProgress } from '@mui/material';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import IconCustomers from '../../assets/icon-customer.png';
 import IconDeals from '../../assets/icon-deals.png';
 import CounterCard from './components/counter-card/counter-card';
@@ -12,24 +14,56 @@ import AddNewModal from '../../components/add-new-modal/add-new-modal';
 import DealProgressCard from '../../components/deal-progress-card/deal-progress-card';
 import { useHeader } from '../../hooks/use-header';
 import NextAppointmentCard from './components/next-appointment-card/next-appointment-card';
+import { api } from '../../services/api';
 
 const Home: React.FC = () => {
   const { setTitle, setButton } = useHeader();
-  // const [customerCount, setCustomerCount] = useState<number>(0);
-  const [dealCount, setDealCount] = useState<number>(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [totalDeals, setTotalDeals] = useState<number>(0);
+  const [totalCustomers, setTotalCustomers] = useState<number>(0);
+  const [page, setPage] = useState<number>(0);
+  const limit = 10;
+
+  // isLoading controls the UI display for loading state
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const navigate = useNavigate();
+
+  async function fetchDeals(): Promise<void> {
+    try {
+      setIsLoading(true);
+
+      const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
+      const responseData = response.data.data;
+
+      setTotalDeals(responseData.total);
+    } catch (error) {
+      console.error('Error fetching deals:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function fetchCustomers(): Promise<void> {
+    try {
+      setIsLoading(true);
+
+      const response = await api.get<{ data: { total: number } }>(`/customers?limit=${limit}&offset=${page * limit}`);
+      const responseData = response.data.data;
+
+      setTotalCustomers(responseData.total);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   useEffect(() => {
-    // setCustomerCount(mockCustomers.length);
-    // setDealCount(mockDeals.length);
-    // If using an API, you can fetch the counts here:
-    // fetch('/api/customers')
-    //   .then((response) => response.json())
-    //   .then((data) => setCustomerCount(data.length));
-    // fetch('/api/deals')
-    //   .then((response) => response.json())
-    //   .then((data) => setDealCount(data.length));
-  }, []);
+    void fetchDeals();
+    void fetchCustomers();
+  }, [page]);
 
   useEffect(() => {
     setTitle('Dashboard');
@@ -43,27 +77,35 @@ const Home: React.FC = () => {
   return (
     <>
       <Grid container sx={{ padding: { xs: '12px', sm: '0px', md: '0px' } }}>
-        <Grid size={{ xs: 12, md: 4, lg: 2.5 }} sx={{ padding: { xs: '12px', sm: '16px', md: '24px' } }}>
-          <Grid container>
-            <Grid size={{ xs: 12, sm: 6, md: 12, lg: 12 }}>
-              <NextAppointmentCard />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 12, lg: 12 }}>
-              <CounterCard title="Customers" count={0} iconCounter={IconCustomers} />
-              <CounterCard title="Deals" count={dealCount} iconCounter={IconDeals} />
-            </Grid>
+        {isLoading ? (
+          <Grid size={{ xs: 12 }} sx={{ textAlign: 'center', paddingTop: '150px' }}>
+            <CircularProgress size={40} />
           </Grid>
-        </Grid>
+        ) : (
+          <>
+            <Grid size={{ xs: 12, md: 4, lg: 2.5 }} sx={{ padding: { xs: '12px', sm: '16px', md: '24px' } }}>
+              <Grid container>
+                <Grid size={{ xs: 12, sm: 6, md: 12, lg: 12 }}>
+                  <NextAppointmentCard />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 12, lg: 12 }}>
+                  <CounterCard title="Customers" count={totalCustomers} iconCounter={IconCustomers} onClick={() => void navigate(`/customers`)} />
+                  <CounterCard title="Deals" count={totalDeals} iconCounter={IconDeals} onClick={() => void navigate(`/deals`)} />
+                </Grid>
+              </Grid>
+            </Grid>
 
-        <Grid size={{ xs: 12, md: 8, lg: 6 }} sx={{ padding: { xs: '12px, 12px, 12px, 0', sm: '16px 16px 16px 0', md: '24px 24px 24px 0' } }}>
-          <RecentDealsCard />
-          <DealProgressCard />
-        </Grid>
+            <Grid size={{ xs: 12, md: 8, lg: 6 }} sx={{ padding: { xs: '12px, 12px, 12px, 0', sm: '16px 16px 16px 0', md: '24px 24px 24px 0' } }}>
+              <RecentDealsCard />
+              <DealProgressCard />
+            </Grid>
 
-        <Grid size={{ xs: 12, md: 12, lg: 3.5 }}>
-          <CustomersCard />
-          <TaskCard />
-        </Grid>
+            <Grid size={{ xs: 12, md: 12, lg: 3.5 }}>
+              <CustomersCard />
+              <TaskCard />
+            </Grid>
+          </>
+        )}
       </Grid>
       <AddNewModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>

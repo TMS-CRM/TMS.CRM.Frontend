@@ -1,6 +1,6 @@
 export type Activity = {
-  uuid: number;
-  activityDate: Date;
+  uuid: string;
+  date: Date;
   description: string;
   image?: string;
   dealUuid: string;

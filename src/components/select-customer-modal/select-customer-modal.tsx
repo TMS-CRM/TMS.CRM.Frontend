@@ -1,8 +1,8 @@
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { Avatar, Box, Button, List, Typography } from '@mui/material';
+import { Avatar, Backdrop, Box, Button, CircularProgress, List, Typography } from '@mui/material';
 import Modal from '@mui/material/Modal';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import type { Customer } from '../../types/customer';
 import '../../styles/modal.css';
@@ -18,19 +18,13 @@ interface SelectCustomerModalProps {
 
 const SelectCustomerModal: React.FC<SelectCustomerModalProps> = (props: SelectCustomerModalProps) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  // const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [page, setPage] = useState<number>(0);
   const limit = 6;
-  const customersPerPage = limit;
 
-  // const modalRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    console.log('modal props.open', props.open);
-  }, [props.open]);
+  // modal fade transition loading
+  const [isLoadingModalTransition, setIsLoadingModalTransition] = useState(false);
 
   useEffect(() => {
     void fetchCustomers();
@@ -42,36 +36,22 @@ const SelectCustomerModal: React.FC<SelectCustomerModalProps> = (props: SelectCu
       const response = await api.get<{ data: { items: Customer[]; total: number } }>(`/customers?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
 
-      setCustomers((prev) => [...prev, ...responseData.items]); // append new data
+      setCustomers(responseData.items);
       setTotalCustomers(responseData.total);
     } catch (error) {
       console.error('Error fetching customers:', error);
     } finally {
       setIsLoading(false);
+      setIsLoadingModalTransition(false);
     }
   }
 
-  function loadMore(): void {
-    setPage((prev) => prev + 1);
-    setCurrentIndex((prev) => prev + customersPerPage);
-  }
-
-  function goBack(): void {
-    setCurrentIndex((prev) => Math.max(0, prev - customersPerPage));
-  }
-
-  const currentCustomers = customers.slice(currentIndex, currentIndex + customersPerPage);
-  const totalPages = Math.ceil(customers.length / customersPerPage);
-  const currentPage = Math.floor(currentIndex / customersPerPage) + 1;
-
-  // function handleCancel(): void {
-  //   if (props.open) {
-  //     props.onClose(true);
-  //   }
-  // }
-
   return (
     <>
+      <Backdrop open={isLoadingModalTransition} sx={{ zIndex: 1500 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       <Modal open={props.open} onClose={() => props.onClose(false)}>
         {/* maxHeight: '80vh' */}
         <Box className="box" sx={{ width: { xs: 300, sm: 350, md: 400 } }}>
@@ -97,9 +77,9 @@ const SelectCustomerModal: React.FC<SelectCustomerModalProps> = (props: SelectCu
               <Typography textAlign="center" mt={4} color="text.secondary">
                 Loading...
               </Typography>
-            ) : currentCustomers.length > 0 ? (
+            ) : customers.length > 0 ? (
               <List>
-                {currentCustomers.map((customer) => (
+                {customers.map((customer) => (
                   <Box
                     key={customer.uuid}
                     onClick={() => {
@@ -129,13 +109,25 @@ const SelectCustomerModal: React.FC<SelectCustomerModalProps> = (props: SelectCu
           </Box>
 
           <Box display="flex" justifyContent="center" alignItems="center" padding={1.5} gap={2}>
-            <Button variant="text" onClick={goBack} disabled={currentIndex === 0}>
+            <Button variant="text" onClick={() => setPage((prev) => Math.max(0, prev - 1))} disabled={page === 0 || isLoading}>
               Back
             </Button>
+
             <Typography variant="body2" color="text.secondary">
-              {totalPages > 0 ? `${currentPage} of ${totalPages}` : ''}
+              {totalCustomers > 0 ? `${page + 1} of ${Math.ceil(totalCustomers / limit)}` : ''}
             </Typography>
-            <Button variant="text" onClick={loadMore} disabled={currentIndex + customersPerPage >= totalCustomers}>
+
+            <Button
+              variant="text"
+              onClick={() => {
+                const totalPages = Math.ceil(totalCustomers / limit);
+                if (page + 1 >= totalPages) return;
+
+                setIsLoadingModalTransition(true);
+                setPage((prev) => prev + 1);
+              }}
+              disabled={page + 1 >= Math.ceil(totalCustomers / limit) || isLoading || isLoadingModalTransition}
+            >
               Load More
             </Button>
           </Box>

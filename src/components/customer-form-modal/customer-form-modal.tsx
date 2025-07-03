@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
+import { CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
@@ -36,6 +37,7 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
 
   const [fileName, setFileName] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
 
@@ -73,11 +75,13 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
   });
 
   async function onSubmit(formData: FormValues): Promise<void> {
-    console.log('FormData', formData);
+    // console.log('FormData', formData);
 
     try {
       if (!customerUuid) {
+        setIsSubmitting(true);
         await api.post('/customers', formData);
+        setIsSubmitting(false);
       } else {
         return;
       }
@@ -112,7 +116,7 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
             <Typography variant="h5" className="title-header-modal">
               Add New Customer
             </Typography>
-            <Button endIcon={<CancelIcon className="close-icon" />} onClick={handleCancel} />{' '}
+            <Button endIcon={<CancelIcon className="close-icon" />} onClick={handleCancel} />
           </Box>
 
           <FormProvider {...form}>
@@ -206,7 +210,7 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
                     className="save-button"
                     disabled={!form.formState.isDirty}
                   >
-                    Save Customer
+                    {isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Save Customer'}
                   </Button>
                 </Grid>
               </Grid>

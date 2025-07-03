@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { Box, Button, Modal, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Modal, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import React, { useEffect, useState } from 'react';
 import '../../styles/modal.css';
@@ -9,7 +9,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { api } from '../../services/api';
 import type { Customer } from '../../types/customer';
-import { type Deal, DealProgress, type DealProgressType, DealRoomAccess, type DealRoomAccessType, type DealWithCustomer } from '../../types/deal';
+import { DealProgress, type DealProgressType, DealRoomAccess, type DealRoomAccessType, type DealWithCustomer } from '../../types/deal';
 import DatePickerController from '../form/date-picker-controller';
 import SelectController from '../form/select-controller';
 import TextFieldController from '../form/text-field-controller';
@@ -20,7 +20,7 @@ interface DealModalProps {
   onShowSnackbar?: (message: string, severity: 'saved' | 'deleted') => void;
   onChangeCustomerRequested?: () => void;
   customerUuid?: string;
-  dealUuid?: string;
+  dealUuid: string | null;
 }
 
 interface FormValues {
@@ -41,8 +41,7 @@ interface FormValues {
 const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
-
-  const dealUuid = props.dealUuid;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [fileName, setFileName] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -96,7 +95,7 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
   });
 
   useEffect(() => {
-    if (props.customerUuid) {
+    if (props.customerUuid && props.open) {
       async function fetchCustomer(): Promise<void> {
         try {
           setIsLoading(true);
@@ -116,16 +115,15 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
     } else {
       form.reset({});
     }
-  }, [form, props.customerUuid]);
+  }, [form, props.customerUuid, props.open]);
 
   useEffect(() => {
-    if (dealUuid) {
+    if (props.dealUuid) {
       async function fetchDeal(): Promise<void> {
         try {
           setIsLoading(true);
-          const response = await api.get<{ data: DealWithCustomer }>(`/deals/${dealUuid}`);
+          const response = await api.get<{ data: DealWithCustomer }>(`/deals/${props.dealUuid}`);
           const responseData = response.data.data;
-          console.log('put', responseData);
 
           form.reset({
             customerUuid: responseData.customer.uuid,
@@ -162,17 +160,18 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
       //   zipCode: undefined,
       // });
     }
-  }, [dealUuid, form]);
+  }, [props.dealUuid, form]);
 
   async function onSubmit(formData: FormValues): Promise<void> {
     try {
-      if (dealUuid) {
-        await api.put(`/deals/${dealUuid}`, formData);
+      if (props.dealUuid) {
+        setIsSubmitting(true);
+        await api.put(`/deals/${props.dealUuid}`, formData);
+        setIsSubmitting(false);
       } else {
-        // console.log('FormData', formData);
-        console.log('FormData', formData);
-
+        setIsSubmitting(true);
         await api.post('/deals', formData);
+        setIsSubmitting(false);
       }
 
       form.reset();
@@ -190,10 +189,6 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
     if (props.open) {
       props.onClose(false);
     }
-  }
-
-  if (isLoading) {
-    return <Typography sx={{ p: 4 }}>Loading deal...</Typography>;
   }
 
   return (
@@ -242,7 +237,7 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                 {/* Image preview */}
                 <img
                   src={previewUrl ?? defaultImage}
-                  alt="User Avatar"
+                  alt="Room Image"
                   style={{
                     width: '80px',
                     height: '80px',
@@ -366,7 +361,7 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                     onClick={form.handleSubmit(onSubmit)}
                     disabled={!form.formState.isDirty}
                   >
-                    {props.dealUuid ? 'Done' : 'Save Deal'}
+                    {isSubmitting ? <CircularProgress size={20} color="inherit" /> : props.dealUuid ? 'Done' : 'Save Deal'}
                   </Button>
                 </Grid>
               </Grid>

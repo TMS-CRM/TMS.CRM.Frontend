@@ -6,6 +6,7 @@ import axios, { type AxiosResponse } from 'axios';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/auth-context';
 import { api } from '../services/api';
 import type { ApiResponseBody } from '../types/api-responses/response-body';
@@ -22,12 +23,14 @@ import {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const token = Cookies.get(ACCESS_TOKEN_KEY);
     if (token) {
       decodeAndSetUser(token);
     } else {
-      // router.push('/sign-in');
+      void navigate('/sign-in');
     }
   }, []);
 
@@ -76,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     Cookies.remove(ACCESS_TOKEN_KEY);
     Cookies.remove(REFRESH_TOKEN_KEY);
     setUser(null);
-    // router.push('/sign-in');
+    void navigate('/sign-in');
   }
 
   async function switchTenant(tenantUuid: SwitchTenant): Promise<boolean> {

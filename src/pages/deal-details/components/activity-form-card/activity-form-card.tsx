@@ -1,15 +1,14 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { useState } from 'react';
-import '../../styles/modal.css';
+import '../../../../styles/modal.css';
 import './activity-form-card.css';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
 import * as yup from 'yup';
-import { api } from '../../services/api';
-import DatePickerController from '../form/date-picker-controller';
-import TextFieldController from '../form/text-field-controller';
+import DatePickerController from '../../../../components/form/date-picker-controller';
+import TextFieldController from '../../../../components/form/text-field-controller';
+import { api } from '../../../../services/api';
 
 interface FormValues {
   description: string;
@@ -18,13 +17,14 @@ interface FormValues {
 }
 
 interface ActivityFormCardProps {
-  // onActivityCreated: () => void;
+  onActivityCreated: () => void;
   onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;
+  dealUuid: string;
 }
 
 const ActivityFormCard: React.FC<ActivityFormCardProps> = (props: ActivityFormCardProps) => {
   const [fileName, setFileName] = useState('');
-  const { uuid: dealUuid } = useParams();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
@@ -44,15 +44,19 @@ const ActivityFormCard: React.FC<ActivityFormCardProps> = (props: ActivityFormCa
     defaultValues: {
       description: '',
       date: undefined,
-      dealUuid: dealUuid ?? undefined,
+      dealUuid: props.dealUuid,
     },
   });
 
   async function onSubmit(formData: FormValues): Promise<void> {
-    console.log('FormData', formData);
+    // console.log('FormData', formData);
 
     try {
+      setIsSubmitting(true);
       await api.post('/activities', formData);
+      setIsSubmitting(false);
+
+      props.onActivityCreated();
 
       form.reset();
       props.onShowSnackbar('Activity Saved', 'saved');
@@ -112,7 +116,7 @@ const ActivityFormCard: React.FC<ActivityFormCardProps> = (props: ActivityFormCa
                   className="save-button"
                   disabled={!form.formState.isDirty}
                 >
-                  Save
+                  {isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Save'}
                 </Button>
               </Grid>
             </Grid>

@@ -32,10 +32,6 @@ const RecentDealsCard: React.FC = () => {
     }
   }
 
-  if (isLoading) {
-    return <Typography sx={{ p: 4 }}>Loading deal...</Typography>;
-  }
-
   const hasDeal = deals.length > 0;
 
   if (!hasDeal) {
@@ -63,14 +59,14 @@ const RecentDealsCard: React.FC = () => {
           <Typography variant="h5" color="secondary">
             Recent Deals
           </Typography>
-          <Button className="text-button-recent-deal" onClick={() => void navigate('/deal')} variant="text" color="primary">
+          <Button className="text-button-recent-deal" onClick={() => void navigate('/deals')} variant="text" color="primary">
             View All
           </Button>
         </Box>
 
         {deals.slice(0, 4).map((deal) => (
-          <Box className="deal-body-recent-deal" onClick={() => void navigate(`deal/${deal.uuid}`)} key={deal.uuid}>
-            <img src={deal.dealPicture} alt="Deal" width={44} height={44} style={{ borderRadius: '50%' }} />
+          <Box className="deal-body-recent-deal" onClick={() => void navigate(`/deals/${deal.uuid}`)} key={deal.uuid}>
+            <img src={deal.imageUrl} alt="Deal" width={44} height={44} style={{ borderRadius: '50%' }} />
 
             <Box className="details-body-recent-deal">
               <Box className="body-text-recent-deal">

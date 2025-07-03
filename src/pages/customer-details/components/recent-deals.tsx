@@ -1,15 +1,11 @@
-'use client';
-
 import { BusinessCenterOutlined } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
-import { Box, Button, Card, Container, Typography } from '@mui/material';
+import { Box, Button, Container, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-// import DealFormModal from '../../../components/deal-form-modal';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DealFormModal from '../../../components/deal-form-modal/deal-form-modal';
 import EmptyState from '../../../components/empty-state/empty-state';
-// import SelectCustomerModal from '../../../components/select-customer-modal';
 import SelectCustomerModal from '../../../components/select-customer-modal/select-customer-modal';
 import type { Deal } from '../../../types/deal';
 import './recent-deals.css';
@@ -132,7 +128,7 @@ const RecentDeals: React.FC = () => {
         {deals.map((deal: Deal) => (
           <Grid container key={deal.uuid} onClick={() => handleDealClick(deal.uuid)} className="recent-deals-item">
             <Grid size={{ xs: 3, sm: 2, md: 2, lg: 2 }}>
-              <img src={deal.dealPicture} alt="Deal" width={44} height={44} className="deal-image" />
+              {/* <img src={deal.dealPicture} alt="Deal" width={44} height={44} className="deal-image" /> */}
             </Grid>
 
             <Grid size={{ xs: 9, sm: 10, md: 10, lg: 10 }} className="recent-deals-details">

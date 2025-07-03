@@ -6,28 +6,27 @@ interface CounterCardProps {
   title: string;
   count: number;
   iconCounter: string;
+  onClick: () => void;
 }
 
 const CounterCard: React.FC<CounterCardProps> = (props: CounterCardProps) => {
-  const { title, count, iconCounter } = props;
-
   // Determine if the count is 0
-  const isCountZero = count === 0;
+  const isCountZero = props.count === 0;
 
   return (
-    <Card className="card-counter">
+    <Card className="card-counter" onClick={props.onClick} style={{ cursor: 'pointer' }}>
       <Box className="content">
         <Typography variant="h5" className={`title-counter ${isCountZero ? 'zero-count' : ''}`}>
-          {title}
+          {props.title}
         </Typography>
         <Typography color="secondary" className={`body-text-counter ${isCountZero ? 'zero-count' : ''}`}>
-          {count}
+          {props.count}
         </Typography>
       </Box>
       <img
         className="image-counter"
-        src={iconCounter}
-        alt={title}
+        src={props.iconCounter}
+        alt={props.title}
         width={80}
         height={80}
         style={{

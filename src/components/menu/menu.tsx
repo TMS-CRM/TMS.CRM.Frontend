@@ -29,7 +29,11 @@ const Menu: React.FC = () => {
   const pathname = location.pathname;
 
   async function handleSignOut(): Promise<void> {
-    await signOut();
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
   }
 
   const menuItems = [

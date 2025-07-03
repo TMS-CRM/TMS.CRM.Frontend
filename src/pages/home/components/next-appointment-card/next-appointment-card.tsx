@@ -48,10 +48,6 @@ const NextAppointmentCard: React.FC = () => {
     void fetchNextAppointment();
   }, []);
 
-  if (isLoading) {
-    return <Typography sx={{ p: 4 }}>Loading deal...</Typography>;
-  }
-
   if (!deal) {
     return (
       <>
@@ -124,7 +120,7 @@ const NextAppointmentCard: React.FC = () => {
         </Box>
 
         <Box className="address-card-next-appointment">
-          <img src={deal.dealPicture} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
+          <img src={deal.imageUrl} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
           <Box marginLeft={1.5} fontSize={14}>
             <Typography variant="body1" color="white">
               {deal.street}

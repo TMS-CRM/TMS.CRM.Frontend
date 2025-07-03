@@ -47,10 +47,6 @@ const DealProgressCard: React.FC = () => {
     void fetchDealsAndFindLatest();
   }, []);
 
-  if (isLoading) {
-    return <Typography sx={{ p: 4 }}>Loading deal...</Typography>;
-  }
-
   if (!deal) {
     return (
       <Card
@@ -89,7 +85,7 @@ const DealProgressCard: React.FC = () => {
       <CardContent>
         <Grid container className="header-progress-card">
           <Grid size={{ xs: 12, md: 8 }} className="deal-profile">
-            <Avatar src={deal.dealPicture} alt="Profile" />
+            <Avatar src={deal.imageUrl} alt="Profile" />
             <Box>
               <Typography variant="body1">{deal.street}</Typography>
               <Typography variant="body2">
@@ -99,7 +95,7 @@ const DealProgressCard: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, md: 4 }} className="in-progress-button">
             <Button variant="contained" className="header-button">
-              {deal.progress === 'inProgress' ? 'IN PROGRESS' : 'CLOSED'}
+              {deal.progress === 'InProgress' ? 'IN PROGRESS' : 'CLOSED'}
             </Button>
             <ArrowForwardOutlinedIcon className="arrow-icon" />
           </Grid>
@@ -111,7 +107,7 @@ const DealProgressCard: React.FC = () => {
               <Box display="flex" alignItems="center" gap={1}>
                 <RadioIcon />
                 <Box>
-                  <Typography variant="body2">{act.activityDate}</Typography>
+                  <Typography variant="body2">{act.date instanceof Date ? act.date.toLocaleDateString() : act.date}</Typography>
                   <Typography variant="body2" className="activity-details">
                     {act.description}
                   </Typography>

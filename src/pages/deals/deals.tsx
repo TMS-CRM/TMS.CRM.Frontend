@@ -34,10 +34,11 @@ const Deals: React.FC = () => {
 
   const limit = 10;
 
-  // isLoading controls the UI display for loading state
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   // modal fade transition loading
   const [isLoadingModalTransition, setIsLoadingModalTransition] = useState(false);
+
+  // isLoading controls the UI display for loading state
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // isFetchingRef controls fetching state to avoid duplicates
   const isFetchingRef = useRef(false);
@@ -269,6 +270,7 @@ const Deals: React.FC = () => {
 
       {/* Modal: Deal Form */}
       <DealFormModal
+        dealUuid={null}
         open={addNewDealOpen}
         onClose={(refresh: boolean) => {
           setAddNewDealOpen(false);
