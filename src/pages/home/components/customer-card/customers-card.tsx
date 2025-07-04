@@ -6,7 +6,7 @@ import { PeopleAltOutlined } from '@mui/icons-material';
 import DriveFileRenameOutlineOutlinedIcon from '@mui/icons-material/DriveFileRenameOutlineOutlined';
 import { Avatar, Box, Button, Card, CardContent, Typography } from '@mui/material';
 import './customer-card.css';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmptyState from '../../../../components/empty-state/empty-state';
 import { api } from '../../../../services/api';
@@ -17,6 +17,8 @@ const EditIcon = <DriveFileRenameOutlineOutlinedIcon className="edit-icon-custom
 const CustomerCard: React.FC = () => {
   // const [customerUuid, setCustomerUuid] = useState<number | null>(null);
   const navigate = useNavigate();
+
+  const isFetchingRef = useRef(false);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,8 +31,14 @@ const CustomerCard: React.FC = () => {
   }, [page]);
 
   async function fetchCustomers(): Promise<void> {
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
       const response = await api.get(`/customers?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
 
@@ -39,6 +47,7 @@ const CustomerCard: React.FC = () => {
       console.error('Error fetching tasks:', error);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }
 
@@ -93,7 +102,7 @@ const CustomerCard: React.FC = () => {
             <Fragment key={customer.uuid}>
               <Box
                 onClick={(): void => {
-                  void navigate(`customer/${customer.uuid}`);
+                  void navigate(`customer-details/${customer.uuid}`);
                 }}
                 className="customer"
               >

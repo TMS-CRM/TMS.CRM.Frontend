@@ -2,6 +2,7 @@ import { Box, Button, CardContent, CircularProgress, Grid, Typography } from '@m
 import { useEffect, useRef, useState } from 'react';
 import './activity-list.css';
 import React from 'react';
+import AlertSnackbar from '../../../../components/alert-snackbar/alert-snackbar';
 import RadioIcon from '../../../../components/radio-icon/radio-icon';
 import { api } from '../../../../services/api';
 import type { Activity } from '../../../../types/activity';
@@ -48,18 +49,14 @@ const ActivityList: React.FC<ActivityCardProps> = (props: ActivityCardProps) => 
   }, []);
 
   async function fetchActivites(currentPage: number): Promise<void> {
-    console.log('attempt to fetch activities');
-
     if (isFetchingRef.current) {
       return;
     }
 
-    console.log('fetching activities');
+    isFetchingRef.current = true;
+    setIsLoading(true);
 
     try {
-      isFetchingRef.current = true;
-      setIsLoading(true);
-
       const response = await api.get<{ data: { items: Activity[]; total: number } }>(`/activities?limit=${limit}&offset=${currentPage * limit}`);
       const responseData = response.data.data;
 
@@ -174,14 +171,17 @@ const ActivityList: React.FC<ActivityCardProps> = (props: ActivityCardProps) => 
           setEditActivityOpen(false);
         }}
         activityUuid={selectedActivityUuid!}
-        dealUuid={props.dealUuid}
         onShowSnackbar={(message, severity) => {
           setSnackbarMessage(message);
           setSnackbarSeverity(severity);
           setSnackbarOpen(true);
         }}
-        // onActivityEdited={() => loadActivities()}
+        onUpdated={() => {
+          goToPage(0);
+        }}
       />
+
+      <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} />
     </>
   );
 };

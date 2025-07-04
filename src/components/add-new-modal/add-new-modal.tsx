@@ -2,13 +2,10 @@ import { BusinessCenterOutlined, PeopleAltOutlined } from '@mui/icons-material';
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { Backdrop, Box, Button, CircularProgress, Divider, Modal, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import React, { useRef, useState } from 'react';
-import AddNewCustomer from '../customer-form-modal/customer-form-modal';
+import React, { useState } from 'react';
+import AlertSnackbar from '../alert-snackbar/alert-snackbar';
 import CustomerFormModal from '../customer-form-modal/customer-form-modal';
-import DealModal from '../deal-form-modal/deal-form-modal';
 import DealFormModal from '../deal-form-modal/deal-form-modal';
-import ModalSelectCustomer from '../select-customer-modal/select-customer-modal';
 import '../../styles/modal.css';
 import './add-new-modal.css';
 import SelectCustomerModal from '../select-customer-modal/select-customer-modal';
@@ -140,6 +137,7 @@ const AddNewModal: React.FC<AddNewFormProps> = ({ open, onClose }) => {
           setSnackbarOpen(true);
         }}
       />
+      <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} />
     </>
   );
 };

@@ -7,7 +7,7 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import ReportIcon from '@mui/icons-material/Report';
 import { Box, Button, Card, CardContent, Container, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import React, { Fragment, type JSX, useEffect, useState } from 'react';
+import React, { Fragment, type JSX, useEffect, useRef, useState } from 'react';
 import './task-card.css';
 import { useNavigate } from 'react-router-dom';
 import AlertSnackbar from '../../../../components/alert-snackbar/alert-snackbar';
@@ -17,6 +17,8 @@ import type { Tasks } from '../../../../types/task';
 
 const TaskCard: React.FC = () => {
   const navigate = useNavigate();
+
+  const isFetchingRef = useRef(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskUuid, setTaskUuid] = useState<number | null>(null);
@@ -36,8 +38,14 @@ const TaskCard: React.FC = () => {
   }, [page]);
 
   async function fetchTasks(): Promise<void> {
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
       const response = await api.get(`/tasks?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
       setTasks(responseData.items);
@@ -45,6 +53,7 @@ const TaskCard: React.FC = () => {
       console.error('Error fetching tasks:', error);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }
 
@@ -147,6 +156,7 @@ const TaskCard: React.FC = () => {
                       setTaskUuid(task.uuid);
                       setIsModalOpen(true);
                     }}
+                    sx={{ mb: 3 }} // Add margin bottom for line height between tasks
                   >
                     <Grid size={{ xs: 8, sm: 5, md: 4, lg: 4.5 }}>
                       <Box className="date-icon-conatiner">

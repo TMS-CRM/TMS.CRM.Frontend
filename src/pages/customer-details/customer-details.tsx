@@ -4,7 +4,7 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 import DriveFileRenameOutlineOutlinedIcon from '@mui/icons-material/DriveFileRenameOutlineOutlined';
 import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import * as yup from 'yup';
@@ -23,6 +23,9 @@ const CustomerDetails: React.FC = () => {
   const { setTitle } = useHeader();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isFetchingRef = useRef(false);
+
   const [fileName, setFileName] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -79,10 +82,16 @@ const CustomerDetails: React.FC = () => {
   });
 
   useEffect(() => {
-    if (customerUuid) {
+    if (customerUuid && !isFetchingRef.current) {
       async function fetchCustomer(): Promise<void> {
+        if (isFetchingRef.current) {
+          return;
+        }
+
+        isFetchingRef.current = true;
+        setIsLoading(true);
+
         try {
-          setIsLoading(true);
           const response = await api.get<{ data: Customer }>(`/customers/${customerUuid}`);
           const responseData = response.data.data;
 
@@ -100,6 +109,7 @@ const CustomerDetails: React.FC = () => {
         } catch (error) {
           console.error('Failed to fetch customer', error);
         } finally {
+          isFetchingRef.current = false;
           setIsLoading(false);
         }
       }
@@ -121,16 +131,11 @@ const CustomerDetails: React.FC = () => {
   }, [customerUuid, form]);
 
   async function onSubmit(formData: FormValues): Promise<void> {
-    // console.log('FormData', formData);
+    setIsSubmitting(true);
 
     try {
-      if (customerUuid) {
-        setIsSubmitting(true);
-        await api.put<{ data: Customer }>(`/customers/${customerUuid}`, formData);
-        setIsSubmitting(false);
-      } else {
-        return;
-      }
+      await api.put<{ data: Customer }>(`/customers/${customerUuid}`, formData);
+
       setSnackbarOpen(true);
       setSnackbarMessage('Customer Saved');
       setSnackbarSeverity('saved');
@@ -139,6 +144,8 @@ const CustomerDetails: React.FC = () => {
       console.error('Error saving customer:', error);
       setSnackbarMessage('Failed to save customer');
       setSnackbarSeverity('deleted');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 

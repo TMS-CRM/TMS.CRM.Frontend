@@ -1,6 +1,6 @@
 import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
 import { Box, Button, Card, CardContent, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './recent-deals-card.css';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../../../services/api';
@@ -12,6 +12,8 @@ const RecentDealsCard: React.FC = () => {
   const [page, setPage] = useState<number>(0);
   const limit = 4;
 
+  const isFetchingRef = useRef(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,8 +22,14 @@ const RecentDealsCard: React.FC = () => {
   }, [page]);
 
   async function fetchDeals(): Promise<void> {
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
       const response = await api.get<{ data: { items: Deal[]; total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
       setDeals(responseData.items.slice(0, 4));
@@ -29,6 +37,7 @@ const RecentDealsCard: React.FC = () => {
       console.error('Error fetching deals:', error);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }
 
@@ -65,7 +74,7 @@ const RecentDealsCard: React.FC = () => {
         </Box>
 
         {deals.slice(0, 4).map((deal) => (
-          <Box className="deal-body-recent-deal" onClick={() => void navigate(`/deals/${deal.uuid}`)} key={deal.uuid}>
+          <Box className="deal-body-recent-deal" onClick={() => void navigate(`/deal-details/${deal.uuid}`)} key={deal.uuid}>
             <img src={deal.imageUrl} alt="Deal" width={44} height={44} style={{ borderRadius: '50%' }} />
 
             <Box className="details-body-recent-deal">

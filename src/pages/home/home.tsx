@@ -2,7 +2,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { CircularProgress } from '@mui/material';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import IconCustomers from '../../assets/icon-customer.png';
 import IconDeals from '../../assets/icon-deals.png';
@@ -28,12 +28,20 @@ const Home: React.FC = () => {
   // isLoading controls the UI display for loading state
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const isFetchingDealsRef = useRef(false);
+  const isFetchingCustomersRef = useRef(false);
+
   const navigate = useNavigate();
 
   async function fetchDeals(): Promise<void> {
-    try {
-      setIsLoading(true);
+    if (isFetchingDealsRef.current) {
+      return;
+    }
 
+    isFetchingDealsRef.current = true;
+    setIsLoading(true);
+
+    try {
       const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
 
@@ -42,14 +50,21 @@ const Home: React.FC = () => {
       console.error('Error fetching deals:', error);
     } finally {
       setIsLoading(false);
+      isFetchingDealsRef.current = false;
     }
   }
 
   async function fetchCustomers(): Promise<void> {
-    try {
-      setIsLoading(true);
+    if (isFetchingCustomersRef.current) {
+      return;
+    }
 
+    isFetchingCustomersRef.current = true;
+    setIsLoading(true);
+
+    try {
       const response = await api.get<{ data: { total: number } }>(`/customers?limit=${limit}&offset=${page * limit}`);
+
       const responseData = response.data.data;
 
       setTotalCustomers(responseData.total);
@@ -57,13 +72,17 @@ const Home: React.FC = () => {
       console.error('Error fetching customers:', error);
     } finally {
       setIsLoading(false);
+      isFetchingCustomersRef.current = false;
     }
   }
 
   useEffect(() => {
-    void fetchDeals();
     void fetchCustomers();
-  }, [page]);
+  }, []);
+
+  useEffect(() => {
+    void fetchDeals();
+  }, []);
 
   useEffect(() => {
     setTitle('Dashboard');

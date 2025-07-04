@@ -4,7 +4,7 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { Box, Button, Modal, Typography } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './task-form-modal.css';
 import '../../styles/modal.css';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -31,8 +31,11 @@ interface FormValues {
 const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [wasDeleted, setWasDeleted] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const taskUuid = props.taskUuid;
+
+  const isFetchingRef = useRef(false);
 
   const schema = yup.object().shape({
     completed: yup.boolean().required('Completion status is required'),
@@ -52,8 +55,14 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
   useEffect(() => {
     if (taskUuid && !wasDeleted && props.open) {
       async function fetchTask(): Promise<void> {
+        if (isFetchingRef.current) {
+          return;
+        }
+
+        setIsLoading(true);
+        isFetchingRef.current = true;
+
         try {
-          setIsLoading(true);
           const response = await api.get(`/tasks/${taskUuid}`);
           const responseData = response.data.data;
 
@@ -68,6 +77,7 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
           console.error('Failed to fetch task', error);
         } finally {
           setIsLoading(false);
+          isFetchingRef.current = false;
         }
       }
 
@@ -101,7 +111,8 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
   };
 
   const onSubmit = form.handleSubmit(async (formData) => {
-    console.log('FormData', formData);
+    setIsSubmitting(true);
+
     try {
       if (taskUuid) {
         await api.put(`/tasks/${taskUuid}`, formData);
@@ -119,6 +130,8 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
     } catch (error) {
       console.error('Error saving task:', error);
       props.onShowSnackbar?.('Failed to save task', 'deleted');
+    } finally {
+      setIsSubmitting(false);
     }
   });
 

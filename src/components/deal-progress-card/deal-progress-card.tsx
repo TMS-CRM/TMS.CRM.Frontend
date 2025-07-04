@@ -2,7 +2,7 @@ import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
 import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
 import { Avatar, Box, Button, Card, CardContent, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './deal-progress-card.css';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
@@ -17,13 +17,20 @@ const DealProgressCard: React.FC = () => {
 
   const navigate = useNavigate();
 
+  const isFetchingRef = useRef(false);
+
   // Removed redundant useEffect that called an undefined fetchDealsAndFindLatest function
 
   useEffect(() => {
     async function fetchDealsAndFindLatest(): Promise<void> {
-      try {
-        setIsLoading(true);
+      if (isFetchingRef.current) {
+        return;
+      }
 
+      isFetchingRef.current = true;
+      setIsLoading(true);
+
+      try {
         const response = await api.get<{ data: Deal[] }>('/deals?limit=1&offset=0');
         const deals = response.data.data;
 
@@ -41,6 +48,7 @@ const DealProgressCard: React.FC = () => {
         console.error('Failed to fetch deals', error);
       } finally {
         setIsLoading(false);
+        isFetchingRef.current = false;
       }
     }
 

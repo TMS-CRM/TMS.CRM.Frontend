@@ -79,10 +79,10 @@ const Customers: React.FC = () => {
       return;
     }
 
-    try {
-      isFetchingRef.current = true;
-      setIsLoading(true);
+    isFetchingRef.current = true;
+    setIsLoading(true);
 
+    try {
       const response = await api.get<{ data: { items: Customer[]; total: number } }>(`/customers?limit=${limit}&offset=${currentPage * limit}`);
       const responseData = response.data.data;
 

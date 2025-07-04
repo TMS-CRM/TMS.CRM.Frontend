@@ -46,10 +46,10 @@ const DealDetails: React.FC = () => {
           return;
         }
 
-        try {
-          setIsLoading(true);
-          isFetchingRef.current = true;
+        isFetchingRef.current = true;
+        setIsLoading(true);
 
+        try {
           const response = await api.get<{ data: DealWithCustomer }>(`/deals/${dealUuid}`);
           const responseData = response.data.data;
           setDeal(responseData);

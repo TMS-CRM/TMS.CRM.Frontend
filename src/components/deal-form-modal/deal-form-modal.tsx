@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { Box, Button, CircularProgress, Modal, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../../styles/modal.css';
 import './deal-form-modal.css';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -42,6 +42,8 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isFetchingRef = useRef(false);
 
   const [fileName, setFileName] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -95,10 +97,16 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
   });
 
   useEffect(() => {
-    if (props.customerUuid && props.open) {
+    if (props.customerUuid && props.open && !isFetchingRef.current) {
       async function fetchCustomer(): Promise<void> {
+        if (isFetchingRef.current) {
+          return;
+        }
+
+        isFetchingRef.current = true;
+        setIsLoading(true);
+
         try {
-          setIsLoading(true);
           const response = await api.get<{ data: Customer }>(`/customers/${props.customerUuid}`);
           const responseData = response.data.data;
           setCustomer(responseData);
@@ -108,6 +116,7 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
           console.error('Failed to fetch customer', error);
         } finally {
           setIsLoading(false);
+          isFetchingRef.current = false;
         }
       }
 
@@ -118,10 +127,15 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
   }, [form, props.customerUuid, props.open]);
 
   useEffect(() => {
-    if (props.dealUuid) {
+    if (props.dealUuid && !isFetchingRef.current) {
       async function fetchDeal(): Promise<void> {
+        if (isFetchingRef.current) {
+          return;
+        }
+        setIsLoading(true);
+        isFetchingRef.current = true;
+
         try {
-          setIsLoading(true);
           const response = await api.get<{ data: DealWithCustomer }>(`/deals/${props.dealUuid}`);
           const responseData = response.data.data;
 
@@ -143,44 +157,48 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
           console.error('Failed to fetch customer', error);
         } finally {
           setIsLoading(false);
+          isFetchingRef.current = false;
         }
       }
 
       void fetchDeal();
     } else {
-      // form.reset({
-      //   // avatar: undefined,
-      //   firstName: undefined,
-      //   lastName: undefined,
-      //   email: undefined,
-      //   phone: undefined,
-      //   street: undefined,
-      //   city: undefined,
-      //   state: undefined,
-      //   zipCode: undefined,
-      // });
+      form.reset({
+        customerUuid: undefined,
+        street: undefined,
+        city: undefined,
+        state: undefined,
+        zipCode: undefined,
+        roomArea: undefined,
+        numberOfPeople: undefined,
+        appointmentDate: undefined,
+        specialInstructions: undefined,
+        roomAccess: undefined,
+        price: undefined,
+        progress: undefined,
+      });
     }
   }, [props.dealUuid, form]);
 
   async function onSubmit(formData: FormValues): Promise<void> {
+    setIsSubmitting(true);
+
     try {
       if (props.dealUuid) {
-        setIsSubmitting(true);
         await api.put(`/deals/${props.dealUuid}`, formData);
-        setIsSubmitting(false);
       } else {
-        setIsSubmitting(true);
         await api.post('/deals', formData);
-        setIsSubmitting(false);
       }
 
       form.reset();
       props.onClose(true);
 
-      props.onShowSnackbar?.('Deals Saved', 'saved');
+      props.onShowSnackbar?.('Deal Saved', 'saved');
     } catch (error) {
       console.error('Error saving deal:', error);
       props.onShowSnackbar?.('Failed to save deal', 'deleted');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 

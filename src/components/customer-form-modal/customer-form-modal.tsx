@@ -7,7 +7,7 @@ import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import '../../styles/modal.css';
@@ -38,6 +38,8 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
   const [fileName, setFileName] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isFetchingRef = useRef(false);
 
   const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
 
@@ -75,16 +77,10 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
   });
 
   async function onSubmit(formData: FormValues): Promise<void> {
-    // console.log('FormData', formData);
+    setIsSubmitting(true);
 
     try {
-      if (!customerUuid) {
-        setIsSubmitting(true);
-        await api.post('/customers', formData);
-        setIsSubmitting(false);
-      } else {
-        return;
-      }
+      await api.post('/customers', formData);
 
       form.reset();
       props.onClose(true);
@@ -93,6 +89,8 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
     } catch (error) {
       console.error('Error saving customer:', error);
       props.onShowSnackbar('Failed to save customer', 'deleted');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 

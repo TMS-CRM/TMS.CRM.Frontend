@@ -18,9 +18,8 @@ interface ActivityFormModalProps {
   open: boolean;
   onClose: () => void;
   activityUuid: string;
-  dealUuid: string;
   onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;
-  // onActivityEdited: () => void;
+  onUpdated: () => void;
 }
 
 interface FormValues {
@@ -32,6 +31,7 @@ interface FormValues {
 const ActivityModal: React.FC<ActivityFormModalProps> = (props: ActivityFormModalProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
@@ -42,7 +42,6 @@ const ActivityModal: React.FC<ActivityFormModalProps> = (props: ActivityFormModa
   const navigate = useNavigate();
 
   const [fileName, setFileName] = useState('');
-  const defaultImage = 'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg';
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
@@ -71,8 +70,10 @@ const ActivityModal: React.FC<ActivityFormModalProps> = (props: ActivityFormModa
           return;
         }
 
+        isFetchingRef.current = true;
+        setIsLoading(true);
+
         try {
-          setIsLoading(true);
           const response = await api.get<{ data: Activity }>(`/activities/${props.activityUuid}`);
           const responseData = response.data.data;
 
@@ -84,6 +85,7 @@ const ActivityModal: React.FC<ActivityFormModalProps> = (props: ActivityFormModa
           console.error('Failed to fetch activity', error);
         } finally {
           setIsLoading(false);
+          isFetchingRef.current = false;
         }
       }
 
@@ -97,24 +99,22 @@ const ActivityModal: React.FC<ActivityFormModalProps> = (props: ActivityFormModa
   }, [props.activityUuid, form]);
 
   async function onSubmit(formData: FormValues): Promise<void> {
+    setIsSubmitting(true);
+
     try {
       if (props.activityUuid) {
-        setIsSubmitting(true);
-
         await api.put(`/activities/${props.activityUuid}`, formData);
-
-        setIsSubmitting(false);
-      } else {
-        return;
       }
 
       form.reset();
+      props.onUpdated?.();
       props.onClose();
-
       props.onShowSnackbar?.('Activity Saved', 'saved');
     } catch (error) {
-      console.error('Error saving deal:', error);
+      console.error('Error saving activity:', error);
       props.onShowSnackbar?.('Failed to save activity', 'deleted');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -127,21 +127,19 @@ const ActivityModal: React.FC<ActivityFormModalProps> = (props: ActivityFormModa
 
   async function handleDelete(): Promise<void> {
     if (!props.activityUuid) return;
+    setIsDeleting(true);
 
     try {
       await api.delete(`/activities/${props.activityUuid}`);
-      await navigate(`/deal-details/${props.dealUuid}`, {
-        state: {
-          snackbarMessage: 'Deal deleted',
-          snackbarSeverity: 'deleted',
-          refresh: true,
-        },
-      });
+
+      props.onShowSnackbar?.('Activity Deleted', 'deleted');
+      props.onClose();
+      props.onUpdated?.();
     } catch (error) {
-      console.error('Error deleting deal:', error);
-      setSnackbarMessage('Failed to delete deal');
-      setSnackbarSeverity('deleted');
-      setSnackbarOpen(true);
+      console.error('Error deleting activity:', error);
+      props.onShowSnackbar?.('Failed to delete activity', 'deleted');
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -191,7 +189,7 @@ const ActivityModal: React.FC<ActivityFormModalProps> = (props: ActivityFormModa
                     variant="text"
                     className="button-delete-activity"
                   >
-                    Delete
+                    {isDeleting ? <CircularProgress size={20} color="inherit" /> : 'Delete'}
                   </Button>
                 )}
 

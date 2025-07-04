@@ -88,10 +88,10 @@ const Deals: React.FC = () => {
       return;
     }
 
-    try {
-      isFetchingRef.current = true;
-      setIsLoading(true);
+    isFetchingRef.current = true;
+    setIsLoading(true);
 
+    try {
       const response = await api.get<{ data: { items: Deal[]; total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
 
@@ -259,12 +259,10 @@ const Deals: React.FC = () => {
         onCustomerSelected={(customerUuid) => {
           setSelectedCustomerUuid(customerUuid);
           setIsModalOpen(false);
-          setIsLoadingModalTransition(true); // show loading
+          setIsLoadingModalTransition(true);
 
-          setTimeout(() => {
-            setAddNewDealOpen(true);
-            setIsLoadingModalTransition(false);
-          }, 400); // can adjust duration here
+          setAddNewDealOpen(true);
+          setIsLoadingModalTransition(false);
         }}
       />
 
@@ -280,12 +278,10 @@ const Deals: React.FC = () => {
         }}
         onChangeCustomerRequested={() => {
           setAddNewDealOpen(false);
-          setIsLoadingModalTransition(true); // show loading
+          setIsLoadingModalTransition(true);
 
-          setTimeout(() => {
-            setIsModalOpen(true);
-            setIsLoadingModalTransition(false);
-          }, 400); // match delay to perceived transition
+          setIsModalOpen(true);
+          setIsLoadingModalTransition(false);
         }}
         onShowSnackbar={(message, severity) => {
           setSnackbarMessage(message);

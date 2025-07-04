@@ -1,7 +1,7 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import '../../../../styles/modal.css';
 import './activity-form-card.css';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -26,6 +26,8 @@ const ActivityFormCard: React.FC<ActivityFormCardProps> = (props: ActivityFormCa
   const [fileName, setFileName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isFetchingRef = useRef(false);
+
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
     if (file) {
@@ -49,12 +51,10 @@ const ActivityFormCard: React.FC<ActivityFormCardProps> = (props: ActivityFormCa
   });
 
   async function onSubmit(formData: FormValues): Promise<void> {
-    // console.log('FormData', formData);
+    setIsSubmitting(true);
 
     try {
-      setIsSubmitting(true);
       await api.post('/activities', formData);
-      setIsSubmitting(false);
 
       props.onActivityCreated();
 
@@ -63,6 +63,8 @@ const ActivityFormCard: React.FC<ActivityFormCardProps> = (props: ActivityFormCa
     } catch (error) {
       console.error('Error saving activity:', error);
       props.onShowSnackbar('Failed to save activity', 'deleted');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 

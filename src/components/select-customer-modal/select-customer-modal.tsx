@@ -2,12 +2,13 @@ import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { Avatar, Backdrop, Box, Button, CircularProgress, List, Typography } from '@mui/material';
 import Modal from '@mui/material/Modal';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../../services/api';
 import type { Customer } from '../../types/customer';
 import '../../styles/modal.css';
 import './select-customer-modal.css';
-// import CustomerFormModal from '../customer-form-modal/customer-form-modal';
+import AlertSnackbar from '../alert-snackbar/alert-snackbar';
+import CustomerFormModal from '../customer-form-modal/customer-form-modal';
 
 interface SelectCustomerModalProps {
   open: boolean;
@@ -19,6 +20,14 @@ interface SelectCustomerModalProps {
 const SelectCustomerModal: React.FC<SelectCustomerModalProps> = (props: SelectCustomerModalProps) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
+  const [isCustomerFormModalOpen, setIsCustomerFormModalOpen] = useState(false);
+
+  const isFetchingRef = useRef(false);
+
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [page, setPage] = useState<number>(0);
   const limit = 6;
@@ -31,8 +40,14 @@ const SelectCustomerModal: React.FC<SelectCustomerModalProps> = (props: SelectCu
   }, [page]);
 
   async function fetchCustomers(): Promise<void> {
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
       const response = await api.get<{ data: { items: Customer[]; total: number } }>(`/customers?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
 
@@ -41,13 +56,14 @@ const SelectCustomerModal: React.FC<SelectCustomerModalProps> = (props: SelectCu
     } catch (error) {
       console.error('Error fetching customers:', error);
     } finally {
+      isFetchingRef.current = false;
       setIsLoading(false);
       setIsLoadingModalTransition(false);
     }
   }
 
   return (
-    <>
+    <main>
       <Backdrop open={isLoadingModalTransition} sx={{ zIndex: 1500 }}>
         <CircularProgress color="inherit" />
       </Backdrop>
@@ -60,15 +76,21 @@ const SelectCustomerModal: React.FC<SelectCustomerModalProps> = (props: SelectCu
             <Box>
               <Button
                 onClick={() => {
-                  // setIsFormModalOpen(true);
-                  props.onClose(false); // use props.onClose
+                  setIsCustomerFormModalOpen(true);
+                  setPage(0);
                 }}
                 variant="text"
                 sx={{ marginRight: 1 }}
               >
                 Add New
               </Button>
-              <Button endIcon={<CancelIcon className="close-icon" />} onClick={() => props.onClose(false)} />
+              <Button
+                endIcon={<CancelIcon className="close-icon" />}
+                onClick={() => {
+                  setPage(0);
+                  props.onClose(false);
+                }}
+              />
             </Box>
           </Box>
 
@@ -133,8 +155,19 @@ const SelectCustomerModal: React.FC<SelectCustomerModalProps> = (props: SelectCu
           </Box>
         </Box>
       </Modal>
-      {/* <CustomerFormModal open={isFormModalOpen} onClose={() => setIsFormModalOpen(false)} /> */}
-    </>
+
+      <CustomerFormModal
+        open={isCustomerFormModalOpen}
+        onClose={() => setIsCustomerFormModalOpen(false)}
+        customerUuid={null}
+        onShowSnackbar={(message, severity) => {
+          setSnackbarMessage(message);
+          setSnackbarSeverity(severity);
+          setSnackbarOpen(true);
+        }}
+      />
+      <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} />
+    </main>
   );
 };
 
