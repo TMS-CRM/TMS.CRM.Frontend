@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { Box, Button, Modal, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Modal, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import './task-form-modal.css';
 import '../../styles/modal.css';
@@ -17,9 +18,8 @@ import TextFieldController from '../form/text-field-controller';
 interface TaskModalProps {
   onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;
   open: boolean;
-  onClose: () => void;
-  onTaskListChange?: () => void;
-  taskUuid: number | null;
+  onClose: (refresh: boolean) => void;
+  taskUuid: string | null;
 }
 
 interface FormValues {
@@ -32,8 +32,6 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [wasDeleted, setWasDeleted] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const taskUuid = props.taskUuid;
 
   const isFetchingRef = useRef(false);
 
@@ -53,7 +51,7 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
   });
 
   useEffect(() => {
-    if (taskUuid && !wasDeleted && props.open) {
+    if (props.taskUuid && !wasDeleted && props.open) {
       async function fetchTask(): Promise<void> {
         if (isFetchingRef.current) {
           return;
@@ -63,7 +61,7 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
         isFetchingRef.current = true;
 
         try {
-          const response = await api.get(`/tasks/${taskUuid}`);
+          const response = await api.get(`/tasks/${props.taskUuid}`);
           const responseData = response.data.data;
 
           // console.log('task fetched', response.data.data);
@@ -82,26 +80,45 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
       }
 
       void fetchTask();
-    } else {
+    } else if (props.open && !props.taskUuid) {
       form.reset({
         completed: false,
         description: '',
         dueDate: undefined,
       });
     }
-  }, [taskUuid, form, wasDeleted, props.open]);
+  }, [props.taskUuid, form, wasDeleted, props.open]);
 
-  const handleDelete = async (): Promise<void> => {
-    if (!taskUuid) return;
+  async function onSubmit(formData: FormValues): Promise<void> {
+    setIsSubmitting(true);
 
     try {
-      await api.delete(`/tasks/${taskUuid}`);
+      if (props.taskUuid) {
+        await api.put(`/tasks/${props.taskUuid}`, formData);
+      } else {
+        await api.post(`/tasks`, formData);
+      }
+
+      form.reset();
+      props.onClose(true);
+
+      props.onShowSnackbar('Task Saved', 'saved');
+    } catch (error) {
+      console.error('Error saving task:', error);
+      props.onShowSnackbar('Failed to save task', 'deleted');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const handleDelete = async (): Promise<void> => {
+    try {
+      await api.delete(`/tasks/${props.taskUuid}`);
 
       setWasDeleted(true);
       form.reset();
 
-      props.onClose();
-      props.onTaskListChange?.();
+      props.onClose(true);
 
       props.onShowSnackbar?.('Task Deleted', 'deleted');
     } catch (error) {
@@ -110,35 +127,10 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
     }
   };
 
-  const onSubmit = form.handleSubmit(async (formData) => {
-    setIsSubmitting(true);
-
-    try {
-      if (taskUuid) {
-        await api.put(`/tasks/${taskUuid}`, formData);
-        console.log(taskUuid);
-      } else {
-        await api.post('/tasks', formData);
-      }
-
-      form.reset();
-
-      props.onClose();
-      props.onTaskListChange?.();
-
-      props.onShowSnackbar?.('Task Saved', 'saved');
-    } catch (error) {
-      console.error('Error saving task:', error);
-      props.onShowSnackbar?.('Failed to save task', 'deleted');
-    } finally {
-      setIsSubmitting(false);
-    }
-  });
-
   function handleCancel(): void {
     form.reset();
     if (props.open) {
-      props.onClose();
+      props.onClose(false);
     }
   }
 
@@ -148,7 +140,7 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
 
   return (
     <>
-      <Modal open={props.open} onClose={props.onClose}>
+      <Modal open={props.open} onClose={() => props.onClose(false)}>
         <Box
           className="box"
           sx={{
@@ -157,13 +149,13 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
         >
           <Box className="form-title">
             <Typography variant="h5" className="title-header-modal">
-              {taskUuid ? 'Edit Task' : ' Add New Task'}
+              {props.taskUuid ? 'Edit Task' : ' Add New Task'}
             </Typography>
-            <Button sx={{ minWidth: 0, margin: 0 }} endIcon={<CancelIcon sx={{ color: '#7E92A2' }} />} onClick={props.onClose} />
+            <Button sx={{ minWidth: 0, margin: 0 }} endIcon={<CancelIcon sx={{ color: '#7E92A2' }} />} onClick={handleCancel} />
           </Box>
           <FormProvider {...form}>
             <Box className="form-container">
-              {taskUuid && (
+              {props.taskUuid && (
                 <Box className="completed-container">
                   <Typography className="label">Completed?</Typography>
                   <CheckboxController name="completed" className="check-box-icon-modal" />
@@ -179,14 +171,14 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
                 <DatePickerController name="dueDate" />
               </Box>
 
-              <Box className="form-footer">
-                {!taskUuid && (
+              <Box className="footer-new-task">
+                {!props.taskUuid && (
                   <Button onClick={handleCancel} variant="text" className="button-task button-task--cancel">
                     Cancel
                   </Button>
                 )}
 
-                {taskUuid && (
+                {props.taskUuid && (
                   <Button
                     onClick={() => {
                       void handleDelete();
@@ -198,15 +190,8 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
                   </Button>
                 )}
 
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    void onSubmit();
-                  }}
-                  className="save-button-task"
-                  disabled={!form.formState.isDirty}
-                >
-                  {taskUuid ? 'Done' : 'Save Task'}
+                <Button variant="contained" onClick={form.handleSubmit(onSubmit)} className="save-button-task" disabled={!form.formState.isDirty}>
+                  {isSubmitting ? <CircularProgress size={20} color="inherit" /> : props.taskUuid ? 'Done' : 'Save Task'}
                 </Button>
               </Box>
             </Box>

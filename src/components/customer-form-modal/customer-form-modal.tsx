@@ -33,13 +33,9 @@ interface FormValues {
 }
 
 const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalProps) => {
-  const customerUuid = props.customerUuid;
-
   const [fileName, setFileName] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const isFetchingRef = useRef(false);
 
   const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
 

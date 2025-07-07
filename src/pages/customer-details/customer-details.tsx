@@ -26,7 +26,10 @@ const CustomerDetails: React.FC = () => {
 
   const isFetchingRef = useRef(false);
 
+  const [forceRefreshDeal, setForceRefreshDeal] = useState(false);
+
   const [fileName, setFileName] = useState('');
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
@@ -35,6 +38,7 @@ const CustomerDetails: React.FC = () => {
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
   const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
   const { uuid: customerUuid } = useParams();
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -279,7 +283,13 @@ const CustomerDetails: React.FC = () => {
             </Grid>
 
             <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', flexDirection: 'column' }}>
-              <RecentDeals />
+              <RecentDeals
+                customerUuid={customerUuid!}
+                forceRefresh={forceRefreshDeal}
+                onForceRefreshed={() => {
+                  setForceRefreshDeal(false);
+                }}
+              />
             </Grid>
           </>
         )}

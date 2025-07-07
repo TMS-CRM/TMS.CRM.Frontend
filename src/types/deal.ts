@@ -32,7 +32,7 @@ export type DealRoomAccessType = keyof typeof DealRoomAccess;
 
 export type Deal = {
   uuid: string;
-  customerUuid: number;
+  customerUuid: string;
   imageUrl: string;
   street: string;
   city: string;

@@ -57,16 +57,17 @@
   display: flex;
   align-items: center;
   margin-top: 16px !important;
-  /* border: 1px solid #eaeef4; */
-
-  /* padding: 18px; */
 }
 
-/* .activity-date {
-  color: #7e92a2;
-  font-size: 14px;
-  font-weight: 400;
-} */
+.divider-deal-progress {
+  height: 0.5px !important;
+  background-color: #ececfe !important;
+  margin: 24px auto !important;
+  opacity: 0.6 !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+
 .activity-details {
   font-weight: 500 !important;
   color: #092c4c !important;

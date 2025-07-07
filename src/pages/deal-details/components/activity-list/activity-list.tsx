@@ -1,8 +1,10 @@
+import GraphicEqOutlinedIcon from '@mui/icons-material/GraphicEqOutlined';
 import { Box, Button, CardContent, CircularProgress, Grid, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import './activity-list.css';
 import React from 'react';
 import AlertSnackbar from '../../../../components/alert-snackbar/alert-snackbar';
+import EmptyState from '../../../../components/empty-state/empty-state';
 import RadioIcon from '../../../../components/radio-icon/radio-icon';
 import { api } from '../../../../services/api';
 import type { Activity } from '../../../../types/activity';
@@ -57,7 +59,9 @@ const ActivityList: React.FC<ActivityCardProps> = (props: ActivityCardProps) => 
     setIsLoading(true);
 
     try {
-      const response = await api.get<{ data: { items: Activity[]; total: number } }>(`/activities?limit=${limit}&offset=${currentPage * limit}`);
+      const response = await api.get<{ data: { items: Activity[]; total: number } }>(
+        `/activities?limit=${limit}&offset=${currentPage * limit}&dealUuid=${props.dealUuid}`,
+      );
       const responseData = response.data.data;
 
       setActivities(responseData.items);
@@ -128,9 +132,7 @@ const ActivityList: React.FC<ActivityCardProps> = (props: ActivityCardProps) => 
               ))}
             </Grid>
           ) : (
-            <Typography textAlign="center" mt={4} color="text.secondary">
-              No customers found.
-            </Typography>
+            <EmptyState icon={<GraphicEqOutlinedIcon />} message=" No activity found." />
           )}
 
           <Box display="flex" justifyContent="center" alignItems="center" padding={1.5} gap={2}>

@@ -70,10 +70,6 @@ const Customers: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    console.log(`isLoading ${isLoading}, hasCustomer ${hasCustomer}`);
-  }, [isLoading, hasCustomer]);
-
   async function fetchCustomers(currentPage: number): Promise<void> {
     if (isFetchingRef.current) {
       return;
@@ -122,7 +118,7 @@ const Customers: React.FC = () => {
   return (
     <main>
       <Grid container sx={{ padding: { xs: '12px', sm: '16px', md: '24px ' } }}>
-        {isLoading && !hasCustomer ? (
+        {isLoading ? (
           <Grid size={{ xs: 12 }} sx={{ textAlign: 'center', paddingTop: '150px' }}>
             <CircularProgress size={40} />
           </Grid>

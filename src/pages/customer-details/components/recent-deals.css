@@ -63,14 +63,6 @@
   justify-self: center;
 }
 
-.pagination-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 16px;
-  gap: 8px;
-}
-
 @media (max-width: 426px) {
   .recent-deals-container {
     padding: 16px !important;

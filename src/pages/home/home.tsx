@@ -8,10 +8,10 @@ import IconCustomers from '../../assets/icon-customer.png';
 import IconDeals from '../../assets/icon-deals.png';
 import CounterCard from './components/counter-card/counter-card';
 import CustomersCard from './components/customer-card/customers-card';
+import DealProgressCard from './components/deal-progress-card/deal-progress-card';
 import RecentDealsCard from './components/recent-deals-card/recent-deals-card';
 import TaskCard from './components/task-card/task-card';
 import AddNewModal from '../../components/add-new-modal/add-new-modal';
-import DealProgressCard from '../../components/deal-progress-card/deal-progress-card';
 import { useHeader } from '../../hooks/use-header';
 import NextAppointmentCard from './components/next-appointment-card/next-appointment-card';
 import { api } from '../../services/api';
@@ -33,7 +33,28 @@ const Home: React.FC = () => {
 
   const navigate = useNavigate();
 
-  async function fetchDeals(): Promise<void> {
+  // async function fetchDeals(): Promise<void> {
+  //   if (isFetchingDealsRef.current) {
+  //     return;
+  //   }
+
+  //   isFetchingDealsRef.current = true;
+  //   setIsLoading(true);
+
+  //   try {
+  //     const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
+  //     const responseData = response.data.data;
+
+  //     setTotalDeals(responseData.total);
+  //   } catch (error) {
+  //     console.error('Error fetching deals:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //     isFetchingDealsRef.current = false;
+  //   }
+  // }
+
+  function fetchDeals(): void {
     if (isFetchingDealsRef.current) {
       return;
     }
@@ -42,7 +63,8 @@ const Home: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
+      // const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
+      const response = { data: { data: { total: 0 } } };
       const responseData = response.data.data;
 
       setTotalDeals(responseData.total);
@@ -54,7 +76,7 @@ const Home: React.FC = () => {
     }
   }
 
-  async function fetchCustomers(): Promise<void> {
+  function fetchCustomers(): void {
     if (isFetchingCustomersRef.current) {
       return;
     }
@@ -63,7 +85,7 @@ const Home: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await api.get<{ data: { total: number } }>(`/customers?limit=${limit}&offset=${page * limit}`);
+      const response = { data: { data: { total: 0 } } };
 
       const responseData = response.data.data;
 
@@ -75,6 +97,28 @@ const Home: React.FC = () => {
       isFetchingCustomersRef.current = false;
     }
   }
+
+  // async function fetchCustomers(): Promise<void> {
+  //   if (isFetchingCustomersRef.current) {
+  //     return;
+  //   }
+
+  //   isFetchingCustomersRef.current = true;
+  //   setIsLoading(true);
+
+  //   try {
+  //     const response = await api.get<{ data: { total: number } }>(`/customers?limit=${limit}&offset=${page * limit}`);
+
+  //     const responseData = response.data.data;
+
+  //     setTotalCustomers(responseData.total);
+  //   } catch (error) {
+  //     console.error('Error fetching customers:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //     isFetchingCustomersRef.current = false;
+  //   }
+  // }
 
   useEffect(() => {
     void fetchCustomers();

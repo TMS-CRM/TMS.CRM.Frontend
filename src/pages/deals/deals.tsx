@@ -136,7 +136,7 @@ const Deals: React.FC = () => {
       </Backdrop>
 
       <Grid container sx={{ padding: { xs: '12px', sm: '16px', md: '24px' } }}>
-        {isLoading && !hasDeal ? (
+        {isLoading ? (
           <Grid size={{ xs: 12 }} sx={{ textAlign: 'center', paddingTop: '150px' }}>
             <CircularProgress size={40} />
           </Grid>

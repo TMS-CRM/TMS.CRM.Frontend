@@ -1,20 +1,36 @@
 .add-new-deal-not-found-next-appointment {
-  padding: 10px 32px;
-  background-color: #fff;
-  width: 100%;
+  padding: 10px 32px !important;
+  background-color: #fff !important;
+  width: 100% !important;
 }
 
 .box-content-not-found-next-appointment {
-  flex: 1;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  flex: 1 !important;
+  color: #ffffff !important;
+}
+
+.not-found-card-content {
   display: flex;
+  flex: 1;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: #ffffff;
 }
 
 .icon-not-found-next-appointment {
-  color: #ffffff;
+  color: #ffffff !important;
+  height: 25px !important;
+  width: 25px !important;
+}
+
+.footer-card-next-appointment-not-found {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .card-next-appointment {
@@ -52,18 +68,17 @@
   display: flex;
   justify-content: space-between;
   margin-top: 24px;
+  margin-bottom: 24px;
 }
 
 .footer-card-next-appointment {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-top: 26px;
 }
 
 .see-detail-next-appointment {
-  padding: 10px 32px !important;
   background-color: #eaeef4 !important;
+  padding: 10px 32px !important;
 }
 
 .bg-image-next-appointment {
@@ -92,11 +107,12 @@
     flex-direction: column;
     gap: 12px;
     margin-top: 15px;
+    margin-bottom: 15px;
     align-items: flex-start;
   }
 
   .footer-card-next-appointment {
-    align-items: flex-start;
+    align-items: flex-start !important;
     flex-direction: column;
     gap: 12px;
     margin-top: 15px;

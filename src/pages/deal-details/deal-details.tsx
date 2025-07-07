@@ -40,32 +40,29 @@ const DealDetails: React.FC = () => {
   }, [setTitle]);
 
   useEffect(() => {
-    if (dealUuid && !isFetchingRef.current) {
-      async function fetchDeal(): Promise<void> {
-        if (isFetchingRef.current) {
-          return;
-        }
+    void fetchDeal();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-        isFetchingRef.current = true;
-        setIsLoading(true);
-
-        try {
-          const response = await api.get<{ data: DealWithCustomer }>(`/deals/${dealUuid}`);
-          const responseData = response.data.data;
-          setDeal(responseData);
-        } catch (error) {
-          console.error('Failed to fetch customer', error);
-        } finally {
-          setIsLoading(false);
-          isFetchingRef.current = false;
-        }
-      }
-
-      void fetchDeal();
-    } else {
+  async function fetchDeal(): Promise<void> {
+    if (isFetchingRef.current) {
       return;
     }
-  }, [dealUuid]);
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const response = await api.get<{ data: DealWithCustomer }>(`/deals/${dealUuid}`);
+      const responseData = response.data.data;
+      setDeal(responseData);
+    } catch (error) {
+      console.error('Failed to fetch customer', error);
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }
 
   useEffect(() => {
     const state = location.state as { snackbarMessage?: string; snackbarSeverity?: 'saved' | 'deleted'; refresh?: boolean } | null;
@@ -81,6 +78,10 @@ const DealDetails: React.FC = () => {
       window.history.replaceState({}, document.title);
     }, 0);
   }, []);
+
+  function setPageAndRefresh(): void {
+    void fetchDeal();
+  }
 
   async function handleDelete(): Promise<void> {
     if (!dealUuid) return;
@@ -254,7 +255,16 @@ const DealDetails: React.FC = () => {
         )}
       </Grid>
 
-      <DealModal open={editDealOpen} onClose={() => setEditDealOpen(false)} dealUuid={dealUuid!} />
+      <DealModal
+        open={editDealOpen}
+        onClose={(refresh: boolean) => {
+          setEditDealOpen(false);
+          if (refresh) {
+            setPageAndRefresh();
+          }
+        }}
+        dealUuid={dealUuid!}
+      />
 
       <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} />
     </>

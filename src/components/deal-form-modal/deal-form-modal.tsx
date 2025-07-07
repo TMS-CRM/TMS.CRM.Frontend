@@ -211,7 +211,7 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
 
   return (
     <>
-      <Modal open={props.open} onClose={props.onClose}>
+      <Modal open={props.open} onClose={() => props.onClose(false)}>
         <Box
           className="box"
           sx={{

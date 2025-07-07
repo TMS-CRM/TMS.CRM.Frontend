@@ -3,6 +3,7 @@ import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import './recent-deals-card.css';
 import { useNavigate } from 'react-router-dom';
+import EmptyState from '../../../../components/empty-state/empty-state';
 import { api } from '../../../../services/api';
 import { type Deal } from '../../../../types/deal';
 
@@ -18,10 +19,29 @@ const RecentDealsCard: React.FC = () => {
 
   useEffect(() => {
     void fetchDeals();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  async function fetchDeals(): Promise<void> {
+  // async function fetchDeals(): Promise<void> {
+  //   if (isFetchingRef.current) {
+  //     return;
+  //   }
+
+  //   isFetchingRef.current = true;
+  //   setIsLoading(true);
+
+  //   try {
+  //     const response = await api.get<{ data: { items: Deal[]; total: number } }>(`/deals?sortBy=createdOn&order=desc&limit=${limit}&offset=0`);
+  //     const responseData = response.data.data;
+  //     setDeals(responseData.items);
+  //   } catch (error) {
+  //     console.error('Error fetching deals:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //     isFetchingRef.current = false;
+  //   }
+  // }
+
+  function fetchDeals(): void {
     if (isFetchingRef.current) {
       return;
     }
@@ -30,7 +50,14 @@ const RecentDealsCard: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await api.get<{ data: { items: Deal[]; total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
+      const response = {
+        data: {
+          data: {
+            items: [],
+            total: 0,
+          },
+        },
+      };
       const responseData = response.data.data;
       setDeals(responseData.items.slice(0, 4));
     } catch (error) {
@@ -41,67 +68,62 @@ const RecentDealsCard: React.FC = () => {
     }
   }
 
-  const hasDeal = deals.length > 0;
-
-  if (!hasDeal) {
-    return (
-      <Card
-        className="card-recent-deals"
-        sx={{
-          height: { xs: 290, sm: 350, md: 400 },
-        }}
-      >
-        <CardContent>
-          <Box className="recent-deals-not-found-card">
-            <BusinessCenterOutlinedIcon className="icon-not-found-card" />
-            <Typography>No deals found.</Typography>
-          </Box>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="card-recent-deals">
-      <CardContent>
-        <Box className="header-recent-deal">
-          <Typography variant="h5" color="secondary">
-            Recent Deals
-          </Typography>
-          <Button className="text-button-recent-deal" onClick={() => void navigate('/deals')} variant="text" color="primary">
-            View All
-          </Button>
-        </Box>
-
-        {deals.slice(0, 4).map((deal) => (
-          <Box className="deal-body-recent-deal" onClick={() => void navigate(`/deal-details/${deal.uuid}`)} key={deal.uuid}>
-            <img src={deal.imageUrl} alt="Deal" width={44} height={44} style={{ borderRadius: '50%' }} />
-
-            <Box className="details-body-recent-deal">
-              <Box className="body-text-recent-deal">
-                <Typography variant="body1">{deal.street}</Typography>
-                <Typography variant="body2">{deal.city}</Typography>
-              </Box>
-
-              <Box className="body-text-recent-deal">
-                <Typography variant="body1">{deal.price}</Typography>
-                <Typography variant="body2">
-                  {new Date(deal.appointmentDate)
-                    .toLocaleString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                    .replace(',', '')}
-                </Typography>
-              </Box>
+    <>
+      {deals.length > 0 ? (
+        <Card className="card-recent-deals">
+          <CardContent>
+            <Box className="header-recent-deal">
+              <Typography variant="h5" color="secondary">
+                Recent Deals
+              </Typography>
+              <Button className="text-button-recent-deal" onClick={() => void navigate('/deals')} variant="text" color="primary">
+                View All
+              </Button>
             </Box>
-          </Box>
-        ))}
-      </CardContent>
-    </Card>
+
+            {deals.map((deal) => (
+              <Box className="deal-body-recent-deal" onClick={() => void navigate(`/deal-details/${deal.uuid}`)} key={deal.uuid}>
+                <img src={deal.imageUrl} alt="Deal" width={44} height={44} style={{ borderRadius: '50%' }} />
+
+                <Box className="details-body-recent-deal">
+                  <Box className="body-text-recent-deal">
+                    <Typography variant="body1">{deal.street}</Typography>
+                    <Typography variant="body2">{deal.city}</Typography>
+                  </Box>
+
+                  <Box className="body-text-recent-deal">
+                    <Typography variant="body1">${deal.price}</Typography>
+                    <Typography variant="body2">
+                      {new Date(deal.appointmentDate)
+                        .toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                        .replace(',', '')}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            ))}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card
+          className="card-recent-deals"
+          sx={{
+            height: { xs: 290, sm: 350, md: 400 },
+          }}
+        >
+          <CardContent>
+            <EmptyState message="No deal found." icon={<BusinessCenterOutlinedIcon />} />
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 };
 
