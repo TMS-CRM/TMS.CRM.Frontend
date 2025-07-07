@@ -26,7 +26,32 @@ const DealProgressCard: React.FC = () => {
     void fetchDealInProgressAndActivities();
   }, []);
 
-  // async function fetchDealInProgressAndActivities(): Promise<void> {
+  async function fetchDealInProgressAndActivities(): Promise<void> {
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const response = await api.get<{ data: { items: Deal[] } }>(`/deals?sortBy=createdOn&order=desc&progress=InProgress&limit=1&offset=0`);
+      const responseData = response.data.data;
+      setDeal(responseData.items);
+
+      if (responseData.items.length > 0) {
+        const dealUuid = responseData.items[0].uuid;
+        await fetchActivities(dealUuid);
+      }
+    } catch (error) {
+      console.error('Error fetching deal in progress:', error);
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }
+
+  // function fetchDealInProgressAndActivities(): void {
   //   if (isFetchingRef.current) {
   //     return;
   //   }
@@ -35,7 +60,14 @@ const DealProgressCard: React.FC = () => {
   //   setIsLoading(true);
 
   //   try {
-  //     const response = await api.get<{ data: { items: Deal[] } }>(`/deals?sortBy=createdOn&order=desc&progress=InProgress&limit=1&offset=0`);
+  //     const response = {
+  //       data: {
+  //         data: {
+  //           items: [],
+  //           total: 0,
+  //         },
+  //       },
+  //     };
   //     const responseData = response.data.data;
   //     setDeal(responseData.items);
 
@@ -51,51 +83,19 @@ const DealProgressCard: React.FC = () => {
   //   }
   // }
 
-  function fetchDealInProgressAndActivities(): void {
-    if (isFetchingRef.current) {
-      return;
-    }
-
-    isFetchingRef.current = true;
-    setIsLoading(true);
-
+  async function fetchActivities(dealUuid: string): Promise<void> {
     try {
-      const response = {
-        data: {
-          data: {
-            items: [],
-            total: 0,
-          },
-        },
-      };
+      const response = await api.get<{ data: { items: Activity[] } }>(`/activities?limit=2&offset=0&dealUuid=${dealUuid}`);
       const responseData = response.data.data;
-      setDeal(responseData.items);
 
-      // if (responseData.items.length > 0) {
-      //   const dealUuid = responseData.items[0].uuid;
-      //   await fetchActivities(dealUuid);
-      // }
+      setActivities(responseData.items);
     } catch (error) {
-      console.error('Error fetching deal in progress:', error);
+      console.error('Error fetching activities:', error);
     } finally {
-      setIsLoading(false);
       isFetchingRef.current = false;
+      setIsLoading(false);
     }
   }
-
-  // async function fetchActivities(dealUuid: string): Promise<void> {
-  //   try {
-  //     const response = await api.get<{ data: { items: Activity[] } }>(`/activities?limit=2&offset=0&dealUuid=${dealUuid}`);
-  //     const responseData = response.data.data;
-
-  //     setActivities(responseData.items);
-  //   } catch (error) {
-  //     console.error('Error fetching activities:', error);
-  //   } finally {
-  //     isFetchingRef.current = false;
-  //     setIsLoading(false);
-  //   }
-  // }
 
   function handleDealClick(dealUuid: string): void {
     void navigate(`/deal-details/${dealUuid}`);

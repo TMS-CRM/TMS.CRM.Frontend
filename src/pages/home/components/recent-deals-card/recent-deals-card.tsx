@@ -9,8 +9,8 @@ import { type Deal } from '../../../../types/deal';
 
 const RecentDealsCard: React.FC = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [page, setPage] = useState<number>(0);
+  const [, setIsLoading] = useState<boolean>(false);
+  const [page] = useState<number>(0);
   const limit = 4;
 
   const isFetchingRef = useRef(false);
@@ -21,27 +21,7 @@ const RecentDealsCard: React.FC = () => {
     void fetchDeals();
   }, [page]);
 
-  // async function fetchDeals(): Promise<void> {
-  //   if (isFetchingRef.current) {
-  //     return;
-  //   }
-
-  //   isFetchingRef.current = true;
-  //   setIsLoading(true);
-
-  //   try {
-  //     const response = await api.get<{ data: { items: Deal[]; total: number } }>(`/deals?sortBy=createdOn&order=desc&limit=${limit}&offset=0`);
-  //     const responseData = response.data.data;
-  //     setDeals(responseData.items);
-  //   } catch (error) {
-  //     console.error('Error fetching deals:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //     isFetchingRef.current = false;
-  //   }
-  // }
-
-  function fetchDeals(): void {
+  async function fetchDeals(): Promise<void> {
     if (isFetchingRef.current) {
       return;
     }
@@ -50,16 +30,9 @@ const RecentDealsCard: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = {
-        data: {
-          data: {
-            items: [],
-            total: 0,
-          },
-        },
-      };
+      const response = await api.get<{ data: { items: Deal[]; total: number } }>(`/deals?sortBy=createdOn&order=desc&limit=${limit}&offset=0`);
       const responseData = response.data.data;
-      setDeals(responseData.items.slice(0, 4));
+      setDeals(responseData.items);
     } catch (error) {
       console.error('Error fetching deals:', error);
     } finally {
@@ -67,6 +40,33 @@ const RecentDealsCard: React.FC = () => {
       isFetchingRef.current = false;
     }
   }
+
+  // function fetchDeals(): void {
+  //   if (isFetchingRef.current) {
+  //     return;
+  //   }
+
+  //   isFetchingRef.current = true;
+  //   setIsLoading(true);
+
+  //   try {
+  //     const response = {
+  //       data: {
+  //         data: {
+  //           items: [],
+  //           total: 0,
+  //         },
+  //       },
+  //     };
+  //     const responseData = response.data.data;
+  //     setDeals(responseData.items.slice(0, 4));
+  //   } catch (error) {
+  //     console.error('Error fetching deals:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //     isFetchingRef.current = false;
+  //   }
+  // }
 
   return (
     <>

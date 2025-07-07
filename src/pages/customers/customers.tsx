@@ -20,7 +20,7 @@ const Customers: React.FC = () => {
   const { setTitle, setButton } = useHeader();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const hasCustomer = customers.length > 0;
+  const hasCustomers = customers.length > 0;
 
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
@@ -85,7 +85,7 @@ const Customers: React.FC = () => {
       setCustomers((prevCustomers) => (currentPage === 0 ? responseData.items : [...prevCustomers, ...responseData.items]));
       setTotalCustomers(responseData.total);
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error('Error fetching customers:', error);
     } finally {
       setIsLoading(false);
       isFetchingRef.current = false;
@@ -122,7 +122,7 @@ const Customers: React.FC = () => {
           <Grid size={{ xs: 12 }} sx={{ textAlign: 'center', paddingTop: '150px' }}>
             <CircularProgress size={40} />
           </Grid>
-        ) : !hasCustomer ? (
+        ) : !hasCustomers ? (
           <EmptyState icon={<PeopleAltOutlined />} message="No customers found." />
         ) : (
           <>
@@ -176,7 +176,7 @@ const Customers: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" sx={{ textAlign: 'right' }}>
-                              <DriveFileRenameOutlineOutlinedIcon className="icon-cell" />
+                              <DriveFileRenameOutlineOutlinedIcon />
                             </Typography>
                           </TableCell>
                         </TableRow>

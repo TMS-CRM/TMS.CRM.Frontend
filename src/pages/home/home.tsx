@@ -14,7 +14,7 @@ import TaskCard from './components/task-card/task-card';
 import AddNewModal from '../../components/add-new-modal/add-new-modal';
 import { useHeader } from '../../hooks/use-header';
 import NextAppointmentCard from './components/next-appointment-card/next-appointment-card';
-import { api } from '../../services/api';
+// import { api } from '../../services/api';
 
 const Home: React.FC = () => {
   const { setTitle, setButton } = useHeader();
@@ -22,8 +22,8 @@ const Home: React.FC = () => {
 
   const [totalDeals, setTotalDeals] = useState<number>(0);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
-  const [page, setPage] = useState<number>(0);
-  const limit = 10;
+  // const [page, setPage] = useState<number>(0);
+  // const limit = 10;
 
   // isLoading controls the UI display for loading state
   const [isLoading, setIsLoading] = useState<boolean>(true);

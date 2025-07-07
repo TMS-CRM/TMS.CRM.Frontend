@@ -8,6 +8,7 @@ import Dote from '../../../../assets/dote.png';
 import AlertSnackbar from '../../../../components/alert-snackbar/alert-snackbar';
 import DealFormModal from '../../../../components/deal-form-modal/deal-form-modal';
 import SelectCustomerModal from '../../../../components/select-customer-modal/select-customer-modal';
+// import { api } from '../../../../services/api';
 import { api } from '../../../../services/api';
 import type { Deal } from '../../../../types/deal';
 
@@ -17,10 +18,10 @@ const NextAppointmentCard: React.FC = () => {
   const [addNewDealOpen, setAddNewDealOpen] = useState(false);
   const [selectedCustomerUuid, setSelectedCustomerUuid] = useState<string | null>(null);
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [, setIsLoading] = useState<boolean>(false);
 
   // modal fade transition loading
-  const [isLoadingModalTransition, setIsLoadingModalTransition] = useState(false);
+  const [, setIsLoadingModalTransition] = useState(false);
 
   const defaultImage = 'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg';
 
@@ -36,30 +37,7 @@ const NextAppointmentCard: React.FC = () => {
     void fetchNextAppointment();
   }, []);
 
-  // async function fetchNextAppointment(): Promise<void> {
-  //   if (isFetchingRef.current) {
-  //     return;
-  //   }
-
-  //   isFetchingRef.current = true;
-  //   setIsLoading(true);
-
-  //   try {
-  //     const response = await api.get<{ data: { items: Deal[] } }>('deals?from=now&order=asc&progress=InProgress,Pending&limit=1&offset=0');
-  //     const responseData = response.data.data;
-  //     console.log('responseData.items', responseData.items);
-
-  //     setDeal(responseData.items);
-  //   } catch (error) {
-  //     console.error('Failed to fetch upcoming appointments', error);
-  //   } finally {
-  //     isFetchingRef.current = false;
-  //     setIsLoading(false);
-  //     setIsLoadingModalTransition(false);
-  //   }
-  // }
-
-  function fetchNextAppointment(): void {
+  async function fetchNextAppointment(): Promise<void> {
     if (isFetchingRef.current) {
       return;
     }
@@ -68,14 +46,7 @@ const NextAppointmentCard: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = {
-        data: {
-          data: {
-            items: [],
-            total: 0,
-          },
-        },
-      };
+      const response = await api.get<{ data: { items: Deal[] } }>('deals?from=now&order=asc&progress=InProgress,Pending&limit=1&offset=0');
       const responseData = response.data.data;
       console.log('responseData.items', responseData.items);
 
@@ -88,6 +59,36 @@ const NextAppointmentCard: React.FC = () => {
       setIsLoadingModalTransition(false);
     }
   }
+
+  // function fetchNextAppointment(): void {
+  //   if (isFetchingRef.current) {
+  //     return;
+  //   }
+
+  //   isFetchingRef.current = true;
+  //   setIsLoading(true);
+
+  //   try {
+  //     const response = {
+  //       data: {
+  //         data: {
+  //           items: [],
+  //           total: 0,
+  //         },
+  //       },
+  //     };
+  //     const responseData = response.data.data;
+  //     console.log('responseData.items', responseData.items);
+
+  //     setDeal(responseData.items);
+  //   } catch (error) {
+  //     console.error('Failed to fetch upcoming appointments', error);
+  //   } finally {
+  //     isFetchingRef.current = false;
+  //     setIsLoading(false);
+  //     setIsLoadingModalTransition(false);
+  //   }
+  // }
 
   function setRefresh(): void {
     void fetchNextAppointment();

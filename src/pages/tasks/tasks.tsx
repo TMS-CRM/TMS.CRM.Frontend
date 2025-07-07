@@ -46,7 +46,6 @@ const Tasks: React.FC = () => {
         variant="contained"
         endIcon={<AddIcon sx={{ color: 'white' }} />}
         onClick={() => {
-          setSelectedTaskUuid(null);
           setIsModalOpen(true);
         }}
       >

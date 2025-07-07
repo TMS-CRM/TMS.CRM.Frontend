@@ -117,9 +117,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   function decodeAndSetUser(token: string): void {
     try {
       const decoded: JwtPayload = jwtDecode<JwtPayload>(token);
+      console.log('decoded', decoded);
 
       setUser({
-        id: decoded.id,
+        uuid: decoded.userUuid,
         name: decoded.name,
         email: decoded.email,
       });

@@ -3,25 +3,59 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import { AppBar, Avatar, Button, Typography } from '@mui/material';
 import { Menu, MenuItem } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.jpg';
 import { useAuth } from '../../hooks/use-auth';
 import { useHeader } from '../../hooks/use-header';
+import { api } from '../../services/api';
 import type { Tenant } from '../../types/tenant';
-import { mockTenant } from '../../types/tenant';
 import './header.css';
 
 const Header: React.FC = () => {
   const { button, title } = useHeader();
-  const [selectedTenantId, setSelectedTenantId] = useState<number | null>(1);
+  const [selectedTenantUuid, setSelectedTenantUuid] = useState<string | null>();
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const navigate = useNavigate();
 
   const { signOut } = useAuth();
 
+  const { user } = useAuth();
+
   const [opacity, setOpacity] = useState(1);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+  const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
+
+  // isLoading controls the UI display for loading state
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const isFetchingRef = useRef(false);
+
+  async function fetchTenants(): Promise<void> {
+    if (isFetchingRef.current || !user?.uuid) return;
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const response = await api.get<{ data: Tenant[] }>(`/users/${user.uuid}/tenants`);
+      const responseData = response.data.data;
+
+      setTenants(() => responseData);
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }
+
+  useEffect(() => {
+    void fetchTenants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uuid]);
 
   function handleAvatarClick(event: React.MouseEvent<HTMLElement>): void {
     setAnchorEl(event.currentTarget);
@@ -31,8 +65,8 @@ const Header: React.FC = () => {
     setAnchorEl(null);
   }
 
-  function handleSwitchAccount(tenantId: number): void {
-    setSelectedTenantId(tenantId);
+  function handleSwitchAccount(tenantUuid: string): void {
+    setSelectedTenantUuid(tenantUuid);
     handleMenuClose();
   }
 
@@ -77,13 +111,7 @@ const Header: React.FC = () => {
           <Grid size={{ xs: 10, sm: 5, md: 5, lg: 5 }} className="header-actions">
             <>{button}</>
             <Search className="search-header" />
-            <Avatar
-              className="avatar-header"
-              src={'https://randomuser.me/api/portraits/women/1.jpg'}
-              alt="User"
-              onClick={handleAvatarClick}
-              sx={{ cursor: 'pointer' }}
-            />
+            <Avatar className="avatar-header" src={defaultAvatar} alt="User" onClick={handleAvatarClick} sx={{ cursor: 'pointer' }} />
             <Menu
               anchorEl={anchorEl}
               id="account-menu"
@@ -97,11 +125,11 @@ const Header: React.FC = () => {
                 },
               }}
             >
-              {mockTenant.map((tenant: Tenant) => (
+              {tenants?.map((tenant: Tenant) => (
                 <MenuItem
-                  className={`menu-item ${tenant.id === selectedTenantId ? 'selected' : ''}`}
-                  key={tenant.id}
-                  onClick={() => handleSwitchAccount(tenant.id)}
+                  className={`menu-item ${tenant.uuid === selectedTenantUuid ? 'selected' : ''}`}
+                  key={tenant.uuid}
+                  onClick={() => handleSwitchAccount(tenant.uuid)}
                 >
                   <img className="avatar-tenant" src={tenant.avatar} alt="Profile" width={30} height={30} />
                   {tenant.name}

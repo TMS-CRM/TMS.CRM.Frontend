@@ -8,7 +8,6 @@ const AuthenticatedLayout: React.FC = () => {
   return (
     <HeaderProvider>
       <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        {/* Header no topo, altura fixa, largura total */}
         <Box
           sx={{
             height: {
@@ -37,7 +36,6 @@ const AuthenticatedLayout: React.FC = () => {
             <Menu />
           </Box>
 
-          {/* Conteúdo que ocupa o resto */}
           <Box
             sx={{
               flex: 1,

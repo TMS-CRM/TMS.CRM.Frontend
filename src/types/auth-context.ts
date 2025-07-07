@@ -10,13 +10,14 @@ export interface AuthContextType {
 }
 
 export interface User {
-  id: string;
+  uuid: string;
   name: string;
   email: string;
 }
 
 export interface JwtPayload {
-  id: string;
+  userUuid: string;
+  tenantUuid: string;
   name: string;
   email: string;
   exp: number;

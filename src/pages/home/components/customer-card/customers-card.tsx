@@ -22,11 +22,32 @@ const CustomerCard: React.FC = () => {
   const limit = 3;
 
   useEffect(() => {
-    void fetchCustomers();
+    void fetchCustomers(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, []);
 
-  // async function fetchCustomers(): Promise<void> {
+  async function fetchCustomers(currentPage: number): Promise<void> {
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const response = await api.get<{ data: { items: Customer[]; total: number } }>(`/customers?limit=${limit}&offset=${page * limit}`);
+      const responseData = response.data.data;
+
+      setCustomers((prevCustomers) => (currentPage === 0 ? responseData.items : [...prevCustomers, ...responseData.items]));
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }
+
+  // function fetchCustomers(): void {
   //   if (isFetchingRef.current) {
   //     return;
   //   }
@@ -35,7 +56,14 @@ const CustomerCard: React.FC = () => {
   //   setIsLoading(true);
 
   //   try {
-  //     const response = await api.get(`/customers?limit=${limit}&offset=${page * limit}`);
+  //     const response = {
+  //       data: {
+  //         data: {
+  //           items: [],
+  //           total: 0,
+  //         },
+  //       },
+  //     };
   //     const responseData = response.data.data;
 
   //     setCustomers((prevCustomers) => (page === 0 ? responseData.items : [...prevCustomers, ...responseData.items]));
@@ -46,34 +74,6 @@ const CustomerCard: React.FC = () => {
   //     isFetchingRef.current = false;
   //   }
   // }
-
-  function fetchCustomers(): void {
-    if (isFetchingRef.current) {
-      return;
-    }
-
-    isFetchingRef.current = true;
-    setIsLoading(true);
-
-    try {
-      const response = {
-        data: {
-          data: {
-            items: [],
-            total: 0,
-          },
-        },
-      };
-      const responseData = response.data.data;
-
-      setCustomers((prevCustomers) => (page === 0 ? responseData.items : [...prevCustomers, ...responseData.items]));
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    } finally {
-      setIsLoading(false);
-      isFetchingRef.current = false;
-    }
-  }
 
   if (isLoading) {
     return <EmptyState message={'Loading tasks...'} />;

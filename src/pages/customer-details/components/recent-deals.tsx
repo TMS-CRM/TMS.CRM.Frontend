@@ -9,7 +9,7 @@ import AlertSnackbar from '../../../components/alert-snackbar/alert-snackbar';
 import DealFormModal from '../../../components/deal-form-modal/deal-form-modal';
 import EmptyState from '../../../components/empty-state/empty-state';
 import SelectCustomerModal from '../../../components/select-customer-modal/select-customer-modal';
-import { api } from '../../../services/api';
+// import { api } from '../../../services/api';
 import type { Deal } from '../../../types/deal';
 
 interface RecentDealsProps {
