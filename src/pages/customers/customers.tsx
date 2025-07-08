@@ -8,6 +8,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import './customers.css';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
+import deaultAvatar from '../../assets/default-avatar.png';
 import AlertSnackbar from '../../components/alert-snackbar/alert-snackbar';
 import CustomerFormModal from '../../components/customer-form-modal/customer-form-modal';
 import EmptyState from '../../components/empty-state/empty-state';
@@ -156,7 +157,7 @@ const Customers: React.FC = () => {
                       <React.Fragment key={customer.uuid}>
                         <TableRow sx={{ cursor: 'pointer' }} onClick={() => handleCustomerClick(customer.uuid)}>
                           <TableCell>
-                            <img src={customer.avatar} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
+                            <img src={customer.avatar ?? deaultAvatar} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
                           </TableCell>
                           <TableCell>
                             <Typography variant="caption">

@@ -38,11 +38,14 @@
   cursor: pointer;
 }
 
+.menu-tenants {
+  z-index: 1300;
+}
+
 .custom-menu-paper {
-  overflow: visible !important;
-  filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.32)) !important;
-  margin-top: 12px !important;
-  position: relative;
+  border-radius: 12px;
+  padding: 8px 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .custom-menu-paper::before {
@@ -55,7 +58,8 @@
   height: 10px;
   background-color: #fff;
   transform: translateY(-50%) rotate(45deg);
-  z-index: 0;
+  z-index: -1;
+  box-shadow: -1px -1px 1px rgba(0, 0, 0, 0.1);
 }
 
 .custom-menu-paper .MuiAvatar-root {
@@ -66,8 +70,11 @@
 }
 
 .avatar-tenant {
-  margin-right: 12px;
   border-radius: 50%;
+  object-fit: cover;
+  width: 30px;
+  height: 30px;
+  margin-right: 12px;
 }
 
 .menu-item {
@@ -78,15 +85,13 @@
 }
 
 .menu-item.selected {
-  background-color: rgba(0, 0, 0, 0.08);
+  background-color: rgba(0, 123, 255, 0.08);
+  font-weight: 600;
 }
 
-.menu-item.selected:hover {
-  background-color: rgba(0, 0, 0, 0.12);
-}
-
-.menu-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+.menu-item:not(.selected):hover,
+.menu-item:not(.selected).Mui-focusVisible {
+  background-color: transparent !important;
 }
 
 .logout-button {

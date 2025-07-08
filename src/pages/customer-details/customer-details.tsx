@@ -16,7 +16,6 @@ import TextFieldController from '../../components/form/text-field-controller';
 import { useHeader } from '../../hooks/use-header';
 import { api } from '../../services/api';
 import type { Customer } from '../../types/customer';
-// import defaultAvatar from '../../../assets/default-avatar.png';
 import './customer-details.css';
 
 const CustomerDetails: React.FC = () => {

@@ -23,7 +23,7 @@ const NextAppointmentCard: React.FC = () => {
   // modal fade transition loading
   const [, setIsLoadingModalTransition] = useState(false);
 
-  const defaultImage = 'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg';
+  const defaultImage = 'https://archive.org/download/placeholder-image/placeholder-image.jpg';
 
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);

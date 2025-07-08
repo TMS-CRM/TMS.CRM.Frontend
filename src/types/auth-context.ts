@@ -3,10 +3,11 @@ export const REFRESH_TOKEN_KEY = 'refreshToken';
 
 export interface AuthContextType {
   user: User | null;
+  tenantUuid: string | null;
   signIn: (credentials: Credentials) => Promise<{ success: boolean; session?: string }>;
   definePassword: (data: DefinePasswordData) => Promise<boolean>;
   signOut: () => Promise<void>;
-  switchTenant: (tenantUuid: SwitchTenant) => Promise<boolean>;
+  switchTenant: (tenantUuid: SwitchTenant) => Promise<void>;
 }
 
 export interface User {
@@ -34,4 +35,10 @@ export interface DefinePasswordData extends Credentials {
 
 export interface SwitchTenant {
   tenantUuid: string;
+}
+
+export interface Tenant {
+  uuid: string;
+  name: string;
+  avatar: string;
 }

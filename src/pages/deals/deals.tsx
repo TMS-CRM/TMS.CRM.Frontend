@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './deals.css';
+import defaultImage from '../../assets/default-image.jpg';
 import AlertSnackbar from '../../components/alert-snackbar/alert-snackbar';
 import DealFormModal from '../../components/deal-form-modal/deal-form-modal';
 import EmptyState from '../../components/empty-state/empty-state';
@@ -191,7 +192,7 @@ const Deals: React.FC = () => {
                           }}
                         >
                           <TableCell>
-                            <img src={deal.imageUrl} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
+                            <img src={deal.imageUrl ?? defaultImage} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
                           </TableCell>
 
                           <TableCell>

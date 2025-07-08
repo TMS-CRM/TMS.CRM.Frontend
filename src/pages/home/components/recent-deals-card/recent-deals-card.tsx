@@ -3,6 +3,7 @@ import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import './recent-deals-card.css';
 import { useNavigate } from 'react-router-dom';
+import defaultImage from '../../../../assets/default-image.jpg';
 import EmptyState from '../../../../components/empty-state/empty-state';
 import { api } from '../../../../services/api';
 import { type Deal } from '../../../../types/deal';
@@ -84,7 +85,7 @@ const RecentDealsCard: React.FC = () => {
 
             {deals.map((deal) => (
               <Box className="deal-body-recent-deal" onClick={() => void navigate(`/deal-details/${deal.uuid}`)} key={deal.uuid}>
-                <img src={deal.imageUrl} alt="Deal" width={44} height={44} style={{ borderRadius: '50%' }} />
+                <img src={deal.imageUrl ?? defaultImage} alt="Deal" width={44} height={44} style={{ borderRadius: '50%' }} />
 
                 <Box className="details-body-recent-deal">
                   <Box className="body-text-recent-deal">

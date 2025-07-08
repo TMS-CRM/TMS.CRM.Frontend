@@ -25,6 +25,8 @@ const DealDetails: React.FC = () => {
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
   const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
 
+  const defaultImage = 'https://archive.org/download/placeholder-image/placeholder-image.jpg';
+
   // isLoading controls the UI display for loading state
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -224,7 +226,7 @@ const DealDetails: React.FC = () => {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 4, lg: 5 }} className="deal-image-container">
-                    <img className="deal-image-deal-page" src={deal?.imageUrl} alt="Deal" width={320} height={320} />
+                    <img className="deal-image-deal-page" src={deal?.imageUrl ?? defaultImage} alt="Deal" width={320} height={320} />
                   </Grid>
                 </Grid>
               </Grid>

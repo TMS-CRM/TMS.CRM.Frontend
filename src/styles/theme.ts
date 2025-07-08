@@ -301,6 +301,9 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           fontSize: '16px',
+          '&:hover': {
+            backgroundColor: 'transparent',
+          },
 
           '@media (max-width:425px)': {
             fontSize: '14px',
@@ -498,6 +501,22 @@ const theme = createTheme({
           '@media (max-width:426px)': {
             weight: ' 20px',
             height: ' 20px',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          focus: 'none',
+        },
+      },
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: 'transparent',
           },
         },
       },

@@ -1,6 +1,7 @@
 import { Search } from '@mui/icons-material';
+import CheckIcon from '@mui/icons-material/Check';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import { AppBar, Avatar, Button, Typography } from '@mui/material';
+import { AppBar, Avatar, Backdrop, Box, Button, CircularProgress, Divider, Fade, IconButton, Tooltip, Typography } from '@mui/material';
 import { Menu, MenuItem } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import React, { useEffect, useRef, useState } from 'react';
@@ -9,27 +10,31 @@ import logo from '../../assets/logo.jpg';
 import { useAuth } from '../../hooks/use-auth';
 import { useHeader } from '../../hooks/use-header';
 import { api } from '../../services/api';
-import type { Tenant } from '../../types/tenant';
+// import type { Tenant } from '../../types/tenant';
 import './header.css';
+import type { Tenant } from '../../types/auth-context';
+import CommandSearchModal from './components/search-modal/search-modal';
 
 const Header: React.FC = () => {
   const { button, title } = useHeader();
-  const [selectedTenantUuid, setSelectedTenantUuid] = useState<string | null>();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const navigate = useNavigate();
 
-  const { signOut } = useAuth();
+  const { signOut, switchTenant } = useAuth();
 
-  const { user } = useAuth();
+  const { user, tenantUuid } = useAuth();
 
   const [opacity, setOpacity] = useState(1);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 
-  // isLoading controls the UI display for loading state
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
+  const defaultTenantAvatar = 'https://www.gravatar.com/avatar/?d=identicon&f=y';
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingTenantTransition, setIsLoadingTenantTransition] = useState(false);
 
   const isFetchingRef = useRef(false);
 
@@ -43,7 +48,7 @@ const Header: React.FC = () => {
       const response = await api.get<{ data: Tenant[] }>(`/users/${user.uuid}/tenants`);
       const responseData = response.data.data;
 
-      setTenants(() => responseData);
+      setTenants(() => responseData.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
       console.error('Error fetching tenants:', error);
     } finally {
@@ -65,8 +70,14 @@ const Header: React.FC = () => {
     setAnchorEl(null);
   }
 
-  function handleSwitchAccount(tenantUuid: string): void {
-    setSelectedTenantUuid(tenantUuid);
+  async function handleSwitchAccount(tenant: Tenant): Promise<void> {
+    setIsLoading(true);
+    setIsLoadingTenantTransition(true);
+    await switchTenant({ tenantUuid: tenant.uuid });
+    setIsLoading(false);
+    setIsLoadingTenantTransition(false);
+
+    // setSelectedTenantUuid(tenantUuid);
     handleMenuClose();
   }
 
@@ -90,6 +101,10 @@ const Header: React.FC = () => {
 
   return (
     <>
+      <Backdrop open={isLoadingTenantTransition} sx={{ zIndex: 1500 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       <AppBar
         sx={{
           backgroundColor: `rgba(246, 250, 253, ${opacity})`,
@@ -110,31 +125,86 @@ const Header: React.FC = () => {
 
           <Grid size={{ xs: 10, sm: 5, md: 5, lg: 5 }} className="header-actions">
             <>{button}</>
-            <Search className="search-header" />
-            <Avatar className="avatar-header" src={defaultAvatar} alt="User" onClick={handleAvatarClick} sx={{ cursor: 'pointer' }} />
+            <Search
+              className="search-header"
+              onClick={() => {
+                setIsSearchOpen(true);
+              }}
+            />
+            <Tooltip title="Switch account">
+              <IconButton
+                onClick={handleAvatarClick}
+                size="small"
+                sx={{ ml: 2 }}
+                aria-controls={open ? 'account-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={open ? 'true' : undefined}
+              >
+                <Avatar src={defaultAvatar} alt="User" sx={{ width: 40, height: 40 }} />
+              </IconButton>
+            </Tooltip>
+
             <Menu
               anchorEl={anchorEl}
               id="account-menu"
               open={open}
               onClose={handleMenuClose}
-              onClick={handleMenuClose}
-              slotProps={{
-                paper: {
-                  className: 'custom-menu-paper',
-                  elevation: 0,
+              TransitionComponent={Fade}
+              PaperProps={{
+                sx: {
+                  mt: 1.5,
+                  borderRadius: 2,
+                  minWidth: 220,
+                  boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
+                  p: 1,
                 },
               }}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
-              {tenants?.map((tenant: Tenant) => (
-                <MenuItem
-                  className={`menu-item ${tenant.uuid === selectedTenantUuid ? 'selected' : ''}`}
-                  key={tenant.uuid}
-                  onClick={() => handleSwitchAccount(tenant.uuid)}
-                >
-                  <img className="avatar-tenant" src={tenant.avatar} alt="Profile" width={30} height={30} />
-                  {tenant.name}
-                </MenuItem>
-              ))}
+              <Typography variant="caption" sx={{ pl: 2, pb: 0.5, fontWeight: 500, color: 'text.secondary' }}>
+                Switch account
+              </Typography>
+
+              <Divider sx={{ my: 1.5 }} />
+
+              {tenants?.map((tenant: Tenant) => {
+                const isSelected = tenant.uuid === tenantUuid;
+
+                return (
+                  <MenuItem
+                    key={tenant.uuid}
+                    onClick={() => {
+                      handleMenuClose();
+                      void handleSwitchAccount(tenant);
+                    }}
+                    selected={isSelected}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      borderRadius: 1,
+                      backgroundColor: isSelected ? 'action.selected' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      },
+                    }}
+                  >
+                    <Avatar
+                      src={tenant.avatar || defaultTenantAvatar}
+                      alt={tenant.name}
+                      sx={{ width: 30, height: 30 }}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = defaultTenantAvatar;
+                      }}
+                    />
+                    <Box flex={1} fontSize="0.875rem">
+                      {tenant.name}
+                    </Box>
+                    {isSelected && <CheckIcon fontSize="small" color="primary" />}
+                  </MenuItem>
+                );
+              })}
             </Menu>
             <Button
               className="logout-button"
@@ -148,6 +218,8 @@ const Header: React.FC = () => {
           </Grid>
         </Grid>
       </AppBar>
+
+      <CommandSearchModal open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 };

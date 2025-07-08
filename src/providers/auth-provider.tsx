@@ -22,6 +22,7 @@ import {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [tenantUuid, setTenantUuid] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
@@ -82,24 +83,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     void navigate('/sign-in');
   }
 
-  async function switchTenant(tenantUuid: SwitchTenant): Promise<boolean> {
+  async function switchTenant({ tenantUuid }: SwitchTenant): Promise<void> {
+    const refreshToken = Cookies.get(REFRESH_TOKEN_KEY);
+
     try {
-      const res = await api.post('/auth/switch-tenant', tenantUuid);
+      const res = await api.post(
+        '/auth/switch-tenant',
+        { tenantUuid },
+        {
+          headers: {
+            authorization: Cookies.get(ACCESS_TOKEN_KEY),
+            'refresh-token': refreshToken,
+          },
+        },
+      );
 
       const { accessToken } = res.data.data;
 
-      Cookies.set(ACCESS_TOKEN_KEY, accessToken, {
-        // secure: process.env.NODE_ENV === 'production',
-        sameSite: 'Strict',
-        path: '/',
-      });
-
+      Cookies.set(ACCESS_TOKEN_KEY, accessToken);
       decodeAndSetUser(accessToken);
-
-      return true;
+      window.location.reload();
     } catch (error) {
-      console.error('Erro ao trocar de tenant:', error);
-      return false;
+      console.error('Error switch tenant:', error);
     }
   }
 
@@ -124,11 +129,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: decoded.name,
         email: decoded.email,
       });
+
+      setTenantUuid(decoded.tenantUuid);
     } catch (error) {
       console.error('Invalid JWT token:', error);
       setUser(null);
     }
   }
 
-  return <AuthContext.Provider value={{ user, signIn, definePassword, signOut, switchTenant }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, tenantUuid, signIn, definePassword, signOut, switchTenant }}>{children}</AuthContext.Provider>;
 };

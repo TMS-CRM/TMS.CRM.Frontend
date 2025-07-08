@@ -1,4 +1,4 @@
-.check-box-task-page,
+/* .check-box-task-page,
 .check-box-icon-task-page,
 .report-icon-task-page {
   width: 1.5rem;
@@ -17,9 +17,9 @@
 
 .check-box-icon-task-page {
   color: #2dc8a8;
-}
+} */
 
-@media (max-width: 426px) {
+/* @media (max-width: 426px) {
   .check-box-task-page,
   .check-box-icon-task-page,
   .report-icon-task-page {
@@ -35,4 +35,4 @@
     width: 1.125rem;
     height: 1.125rem;
   }
-}
+} */

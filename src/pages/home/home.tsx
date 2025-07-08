@@ -14,7 +14,7 @@ import TaskCard from './components/task-card/task-card';
 import AddNewModal from '../../components/add-new-modal/add-new-modal';
 import { useHeader } from '../../hooks/use-header';
 import NextAppointmentCard from './components/next-appointment-card/next-appointment-card';
-// import { api } from '../../services/api';
+import { api } from '../../services/api';
 
 const Home: React.FC = () => {
   const { setTitle, setButton } = useHeader();
@@ -22,8 +22,8 @@ const Home: React.FC = () => {
 
   const [totalDeals, setTotalDeals] = useState<number>(0);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
-  // const [page, setPage] = useState<number>(0);
-  // const limit = 10;
+  const [page, setPage] = useState<number>(0);
+  const limit = 10;
 
   // isLoading controls the UI display for loading state
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -33,28 +33,7 @@ const Home: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // async function fetchDeals(): Promise<void> {
-  //   if (isFetchingDealsRef.current) {
-  //     return;
-  //   }
-
-  //   isFetchingDealsRef.current = true;
-  //   setIsLoading(true);
-
-  //   try {
-  //     const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
-  //     const responseData = response.data.data;
-
-  //     setTotalDeals(responseData.total);
-  //   } catch (error) {
-  //     console.error('Error fetching deals:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //     isFetchingDealsRef.current = false;
-  //   }
-  // }
-
-  function fetchDeals(): void {
+  async function fetchDeals(): Promise<void> {
     if (isFetchingDealsRef.current) {
       return;
     }
@@ -63,8 +42,7 @@ const Home: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
-      const response = { data: { data: { total: 0 } } };
+      const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
 
       setTotalDeals(responseData.total);
@@ -76,29 +54,29 @@ const Home: React.FC = () => {
     }
   }
 
-  function fetchCustomers(): void {
-    if (isFetchingCustomersRef.current) {
-      return;
-    }
+  // function fetchDeals(): void {
+  //   if (isFetchingDealsRef.current) {
+  //     return;
+  //   }
 
-    isFetchingCustomersRef.current = true;
-    setIsLoading(true);
+  //   isFetchingDealsRef.current = true;
+  //   setIsLoading(true);
 
-    try {
-      const response = { data: { data: { total: 0 } } };
+  //   try {
+  //     // const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
+  //     const response = { data: { data: { total: 0 } } };
+  //     const responseData = response.data.data;
 
-      const responseData = response.data.data;
+  //     setTotalDeals(responseData.total);
+  //   } catch (error) {
+  //     console.error('Error fetching deals:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //     isFetchingDealsRef.current = false;
+  //   }
+  // }
 
-      setTotalCustomers(responseData.total);
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-    } finally {
-      setIsLoading(false);
-      isFetchingCustomersRef.current = false;
-    }
-  }
-
-  // async function fetchCustomers(): Promise<void> {
+  // function fetchCustomers(): void {
   //   if (isFetchingCustomersRef.current) {
   //     return;
   //   }
@@ -107,7 +85,7 @@ const Home: React.FC = () => {
   //   setIsLoading(true);
 
   //   try {
-  //     const response = await api.get<{ data: { total: number } }>(`/customers?limit=${limit}&offset=${page * limit}`);
+  //     const response = { data: { data: { total: 0 } } };
 
   //     const responseData = response.data.data;
 
@@ -119,6 +97,28 @@ const Home: React.FC = () => {
   //     isFetchingCustomersRef.current = false;
   //   }
   // }
+
+  async function fetchCustomers(): Promise<void> {
+    if (isFetchingCustomersRef.current) {
+      return;
+    }
+
+    isFetchingCustomersRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const response = await api.get<{ data: { total: number } }>(`/customers?limit=${limit}&offset=${page * limit}`);
+
+      const responseData = response.data.data;
+
+      setTotalCustomers(responseData.total);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    } finally {
+      setIsLoading(false);
+      isFetchingCustomersRef.current = false;
+    }
+  }
 
   useEffect(() => {
     void fetchCustomers();
@@ -139,37 +139,35 @@ const Home: React.FC = () => {
 
   return (
     <>
-      <Grid container sx={{ padding: { xs: '12px', sm: '0px', md: '0px' } }}>
-        {isLoading ? (
-          <Grid size={{ xs: 12 }} sx={{ textAlign: 'center', paddingTop: '150px' }}>
-            <CircularProgress size={40} />
-          </Grid>
-        ) : (
-          <>
-            <Grid size={{ xs: 12, md: 4, lg: 2.5 }} sx={{ padding: { xs: '12px', sm: '16px', md: '24px' } }}>
-              <Grid container>
-                <Grid size={{ xs: 12, sm: 6, md: 12, lg: 12 }}>
-                  <NextAppointmentCard />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 12, lg: 12 }}>
-                  <CounterCard title="Customers" count={totalCustomers} iconCounter={IconCustomers} onClick={() => void navigate(`/customers`)} />
-                  <CounterCard title="Deals" count={totalDeals} iconCounter={IconDeals} onClick={() => void navigate(`/deals`)} />
-                </Grid>
+      {isLoading ? (
+        <Grid size={{ xs: 12 }} sx={{ textAlign: 'center', paddingTop: '150px' }}>
+          <CircularProgress size={40} />
+        </Grid>
+      ) : (
+        <Grid container sx={{ padding: { xs: '12px', sm: '0px', md: '0px' } }}>
+          <Grid size={{ xs: 12, md: 4, lg: 2.5 }} sx={{ padding: { xs: '12px', sm: '16px', md: '24px' } }}>
+            <Grid container>
+              <Grid size={{ xs: 12, sm: 6, md: 12, lg: 12 }}>
+                <NextAppointmentCard />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 12, lg: 12 }}>
+                <CounterCard title="Customers" count={totalCustomers} iconCounter={IconCustomers} onClick={() => void navigate(`/customers`)} />
+                <CounterCard title="Deals" count={totalDeals} iconCounter={IconDeals} onClick={() => void navigate(`/deals`)} />
               </Grid>
             </Grid>
+          </Grid>
 
-            <Grid size={{ xs: 12, md: 8, lg: 6 }} sx={{ padding: { xs: '12px, 12px, 12px, 0', sm: '16px 16px 16px 0', md: '24px 24px 24px 0' } }}>
-              <RecentDealsCard />
-              <DealProgressCard />
-            </Grid>
+          <Grid size={{ xs: 12, md: 8, lg: 6 }} sx={{ padding: { xs: '12px, 12px, 12px, 0', sm: '16px 16px 16px 0', md: '24px 24px 24px 0' } }}>
+            <RecentDealsCard />
+            <DealProgressCard />
+          </Grid>
 
-            <Grid size={{ xs: 12, md: 12, lg: 3.5 }}>
-              <CustomersCard />
-              <TaskCard />
-            </Grid>
-          </>
-        )}
-      </Grid>
+          <Grid size={{ xs: 12, md: 12, lg: 3.5 }}>
+            <CustomersCard />
+            <TaskCard />
+          </Grid>
+        </Grid>
+      )}
       <AddNewModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
