@@ -1,3 +1,5 @@
+import type { User } from './user';
+
 export const ACCESS_TOKEN_KEY = 'accessToken';
 export const REFRESH_TOKEN_KEY = 'refreshToken';
 
@@ -10,16 +12,11 @@ export interface AuthContextType {
   switchTenant: (tenantUuid: SwitchTenant) => Promise<void>;
 }
 
-export interface User {
-  uuid: string;
-  name: string;
-  email: string;
-}
-
 export interface JwtPayload {
   userUuid: string;
   tenantUuid: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   exp: number;
 }
@@ -35,10 +32,4 @@ export interface DefinePasswordData extends Credentials {
 
 export interface SwitchTenant {
   tenantUuid: string;
-}
-
-export interface Tenant {
-  uuid: string;
-  name: string;
-  avatar: string;
 }

@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { Alert, Box, Button, Divider, Grid, IconButton, InputAdornment, Paper, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Divider, Grid, IconButton, InputAdornment, Paper, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +31,8 @@ const SignIn: React.FC = () => {
   const { signIn, definePassword } = useAuth();
 
   const handleToggleVisibility = (): void => setShowPassword((prev) => !prev);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const signInSchema = yup.object({
     email: yup.string().required('Email is required'),
@@ -74,10 +76,8 @@ const SignIn: React.FC = () => {
 
   // Submit login
   async function onSubmitSignIn(data: SignInFormValues): Promise<void> {
-    console.log('sign-in');
-    console.log('formData', signInForm.getValues());
+    setIsSubmitting(true);
 
-    // signInForm.handleSubmit(async (data): Promise<void> => {
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -97,8 +97,9 @@ const SignIn: React.FC = () => {
     } catch (error) {
       setErrorMessage('Unexpected error during sign-in. Please try again.');
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
-    // });
   }
 
   // Submit para definir nova senha
@@ -182,7 +183,7 @@ const SignIn: React.FC = () => {
                     onClick={signInForm.handleSubmit(onSubmitSignIn)}
                     disabled={!signInForm.formState.isDirty || signInForm.formState.isSubmitting}
                   >
-                    Sign In
+                    {isSubmitting ? <CircularProgress size={20} color="inherit" /> : ' Sign In'}
                   </Button>
                 </FormProvider>
               ) : (
@@ -227,7 +228,7 @@ const SignIn: React.FC = () => {
                     // eslint-disable-next-line @typescript-eslint/no-misused-promises
                     onClick={definePasswordForm.handleSubmit(onSubmitDefinePassword)}
                   >
-                    Define Password
+                    {isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Define Password'}
                   </Button>
                 </FormProvider>
               )}

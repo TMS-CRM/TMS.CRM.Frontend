@@ -17,8 +17,8 @@ import {
   type JwtPayload,
   REFRESH_TOKEN_KEY,
   type SwitchTenant,
-  type User,
 } from '../types/auth-context';
+import type { User } from '../types/user';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -126,7 +126,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser({
         uuid: decoded.userUuid,
-        name: decoded.name,
+        firstName: decoded.firstName,
+        lastName: decoded.lastName,
         email: decoded.email,
       });
 

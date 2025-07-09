@@ -1,37 +1,37 @@
+import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
+import { CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import '../../styles/modal.css';
-import { FormProvider, useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
+import { api } from '../../services/api';
+import type { User } from '../../types/user';
 import AlertSnackbar from '../alert-snackbar/alert-snackbar';
 import TextFieldController from '../form/text-field-controller';
 
-interface NewUserModalProps {
+interface UserModalProps {
+  onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;
   open: boolean;
-  onClose: () => void;
-}
-
-interface Name {
-  firstName: string;
-  lastName: string;
+  onClose: (refresh: boolean) => void;
+  userUuid: string | null;
 }
 
 interface FormValues {
-  name: Name;
+  firstName: string;
+  lastName: string;
   email: string;
 }
 
-const NewUserModal: React.FC<NewUserModalProps> = ({ open, onClose }) => {
+const NewUserModal: React.FC<UserModalProps> = (props: UserModalProps) => {
   const [fileName, setFileName] = useState('');
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
@@ -41,50 +41,48 @@ const NewUserModal: React.FC<NewUserModalProps> = ({ open, onClose }) => {
   }
 
   const schema = yup.object().shape({
-    name: yup.object().shape({
-      firstName: yup.string().required('First name is required'),
-      lastName: yup.string().required('Last name is required'),
-    }),
+    firstName: yup.string().required('First name is required'),
+    lastName: yup.string().required('Last name is required'),
     email: yup.string().required('Email is required'),
   });
 
   const form = useForm<FormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
-      name: {
-        firstName: undefined,
-        lastName: undefined,
-      },
+      firstName: undefined,
+      lastName: undefined,
       email: undefined,
     },
   });
 
-  function onSubmit(): () => void {
-    return form.handleSubmit((): void => {
+  async function onSubmit(formData: FormValues): Promise<void> {
+    setIsSubmitting(true);
+
+    try {
+      await api.post(`/users`, formData);
+
       form.reset();
-      onClose();
-      setSnackbarMessage('User Saved');
-      setSnackbarSeverity('saved');
-      setSnackbarOpen(true);
-    });
-  }
+      props.onClose(true);
 
-  function handleCancel(): void {
-    setFileName('');
-    form.reset();
-
-    if (open) {
-      onClose();
+      props.onShowSnackbar('User Saved', 'saved');
+    } catch (error) {
+      console.error('Error saving task:', error);
+      props.onShowSnackbar('Failed to save task', 'deleted');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
-  function handleSnackbarClose(): void {
-    setSnackbarOpen(false);
+  function handleCancel(): void {
+    form.reset();
+    if (props.open) {
+      props.onClose(false);
+    }
   }
 
   return (
     <>
-      <Modal open={open} onClose={onClose}>
+      <Modal open={props.open} onClose={() => props.onClose(false)}>
         <Box
           className="box"
           sx={{
@@ -119,13 +117,13 @@ const NewUserModal: React.FC<NewUserModalProps> = ({ open, onClose }) => {
                       <Typography variant="body1" className="label">
                         First Name
                       </Typography>
-                      <TextFieldController name="name.firstName" type="text" />
+                      <TextFieldController name="firstName" type="text" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="body1" className="label">
                         Last Name
                       </Typography>
-                      <TextFieldController name="name.lastName" type="text" />
+                      <TextFieldController name="lastName" type="text" />
                     </Grid>
                   </Grid>
                   <Grid container spacing={2} marginTop={'24px'}>
@@ -144,8 +142,15 @@ const NewUserModal: React.FC<NewUserModalProps> = ({ open, onClose }) => {
                   <Button variant="outlined" onClick={handleCancel} className="cancel-button">
                     Cancel
                   </Button>
-                  <Button variant="contained" color="primary" onClick={onSubmit} className="save-button">
-                    Save User
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                    onClick={form.handleSubmit(onSubmit)}
+                    className="save-button"
+                    disabled={!form.formState.isDirty}
+                  >
+                    {isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Save User'}
                   </Button>
                 </Grid>
               </Grid>
@@ -153,8 +158,6 @@ const NewUserModal: React.FC<NewUserModalProps> = ({ open, onClose }) => {
           </FormProvider>
         </Box>
       </Modal>
-
-      <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={handleSnackbarClose} />
     </>
   );
 };

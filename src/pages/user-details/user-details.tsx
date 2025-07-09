@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import { yupResolver } from '@hookform/resolvers/yup';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import DriveFileRenameOutlineOutlinedIcon from '@mui/icons-material/DriveFileRenameOutlineOutlined';
@@ -17,7 +16,7 @@ import { api } from '../../services/api';
 import type { User } from '../../types/user';
 
 interface FormValues {
-  avatar: string;
+  // avatar: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -46,7 +45,7 @@ const UserDetails: React.FC = () => {
   }, [setTitle]);
 
   const schema = yup.object().shape({
-    avatar: yup.string().required('Avatar is required'),
+    // avatar: yup.string().required('Avatar is required'),
     firstName: yup.string().required('First name is required'),
     lastName: yup.string().required('Last name is required'),
     email: yup.string().email('Invalid email format').required('Email is required'),
@@ -55,7 +54,7 @@ const UserDetails: React.FC = () => {
   const form = useForm<FormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
-      avatar: undefined,
+      // avatar: undefined,
       firstName: undefined,
       lastName: undefined,
       email: undefined,
@@ -77,7 +76,7 @@ const UserDetails: React.FC = () => {
           const responseData = response.data.data;
 
           form.reset({
-            avatar: responseData.avatar,
+            // avatar: responseData.avatar,
             firstName: responseData.firstName,
             lastName: responseData.lastName,
             email: responseData.email,
@@ -102,10 +101,11 @@ const UserDetails: React.FC = () => {
   }, [userUuid, form]);
 
   async function onSubmit(formData: FormValues): Promise<void> {
+    console.log('arrive here');
     setIsSubmitting(true);
 
     try {
-      await api.put<{ data: User }>(`/customers/${userUuid}`, formData);
+      await api.put<{ data: User }>(`/users/${userUuid}`, formData);
 
       setSnackbarOpen(true);
       setSnackbarMessage('User Saved');
@@ -161,13 +161,10 @@ const UserDetails: React.FC = () => {
                             <img
                               className="profile-picture"
                               src={previewUrl ?? defaultAvatar}
-                              alt="User Avatar"
+                              // alt="User Avatar"
                               style={{
                                 width: '100px',
                                 height: '100px',
-                                // borderRadius: '50%',
-                                // objectFit: 'cover',
-                                // marginBottom: '8px',
                               }}
                             />
                           </Box>
@@ -208,6 +205,7 @@ const UserDetails: React.FC = () => {
                       <Button
                         variant="contained"
                         color="primary"
+                        // eslint-disable-next-line @typescript-eslint/no-misused-promises
                         onClick={form.handleSubmit(onSubmit)}
                         className="save-button-user-page"
                         disabled={!form.formState.isDirty}

@@ -15,7 +15,7 @@ interface AddNewFormProps {
   onClose: () => void;
 }
 
-const AddNewModal: React.FC<AddNewFormProps> = ({ open, onClose }) => {
+const AddNewModal: React.FC<AddNewFormProps> = (props: AddNewFormProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addNewDealOpen, setAddNewDealOpen] = useState(false);
   const [addNewCustomerOpen, setAddNewCustomerOpen] = useState(false);
@@ -35,7 +35,7 @@ const AddNewModal: React.FC<AddNewFormProps> = ({ open, onClose }) => {
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      <Modal open={open} onClose={onClose}>
+      <Modal open={props.open} onClose={props.onClose}>
         <Box
           className="box"
           sx={{
@@ -47,7 +47,7 @@ const AddNewModal: React.FC<AddNewFormProps> = ({ open, onClose }) => {
               <Typography variant="body2">Add New</Typography>
             </Box>
             <Box>
-              <Button endIcon={<CancelIcon className="close-icon" />} onClick={onClose} />
+              <Button endIcon={<CancelIcon className="close-icon" />} onClick={props.onClose} />
             </Box>
           </Box>
 

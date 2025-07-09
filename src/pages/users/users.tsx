@@ -6,14 +6,16 @@ import { Button, CircularProgress, Table, TableBody, TableCell, TableContainer, 
 import Grid from '@mui/material/Grid';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import AlertSnackbar from '../../components/alert-snackbar/alert-snackbar';
 import EmptyState from '../../components/empty-state/empty-state';
 import SectionHeader from '../../components/section-header/section-header';
+import UserFormModal from '../../components/user-form-modal/user-form-modal';
 import { useHeader } from '../../hooks/use-header';
 import { api } from '../../services/api';
 import type { User } from '../../types/user';
 
 const Users: React.FC = () => {
-  const { setTitle } = useHeader();
+  const { setTitle, setButton } = useHeader();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
 
@@ -22,9 +24,9 @@ const Users: React.FC = () => {
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
 
-  const [, setSnackbarOpen] = useState<boolean>(false);
-  const [, setSnackbarMessage] = useState<string | null>(null);
-  const [, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
 
   const limit = 10;
 
@@ -40,7 +42,12 @@ const Users: React.FC = () => {
 
   useEffect(() => {
     setTitle('Users');
-  }, [setTitle]);
+    setButton(
+      <Button className="add-new-header" variant="contained" endIcon={<AddIcon sx={{ color: 'white' }} />} onClick={() => setIsModalOpen(true)}>
+        Add new user
+      </Button>,
+    );
+  }, [setTitle, setButton]);
 
   useEffect(() => {
     const state = location.state as { snackbarMessage?: string; snackbarSeverity?: 'saved' | 'deleted'; refresh?: boolean } | null;
@@ -138,25 +145,27 @@ const Users: React.FC = () => {
                   </TableHead>
                   <TableBody>
                     {users.map((user: User) => (
-                      <TableRow key={user.uuid} sx={{ cursor: 'pointer' }} onClick={() => handleUserClick(user.uuid)}>
-                        <TableCell>
-                          <img src={user.avatar} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption">
-                            {user.firstName} {user.lastName}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption">{user.email}</Typography>
-                        </TableCell>
+                      <React.Fragment key={user.uuid}>
+                        <TableRow key={user.uuid} sx={{ cursor: 'pointer' }} onClick={() => handleUserClick(user.uuid)}>
+                          <TableCell>
+                            <img src={undefined} alt="Profile" width={44} height={44} style={{ borderRadius: '50%' }} />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption">
+                              {user.firstName} {user.lastName}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption">{user.email}</Typography>
+                          </TableCell>
 
-                        <TableCell>
-                          <Typography variant="body2" sx={{ textAlign: 'right' }}>
-                            <DriveFileRenameOutlineOutlinedIcon />
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ textAlign: 'right' }}>
+                              <DriveFileRenameOutlineOutlinedIcon />
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
@@ -165,6 +174,22 @@ const Users: React.FC = () => {
           </>
         )}
       </Grid>
+      <UserFormModal
+        open={isModalOpen}
+        userUuid={null}
+        onClose={(refresh: boolean) => {
+          setIsModalOpen(false);
+          if (refresh) {
+            setPageAndRefresh(0);
+          }
+        }}
+        onShowSnackbar={(message, severity) => {
+          setSnackbarMessage(message);
+          setSnackbarSeverity(severity);
+          setSnackbarOpen(true);
+        }}
+      />
+      <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} />
     </main>
   );
 };

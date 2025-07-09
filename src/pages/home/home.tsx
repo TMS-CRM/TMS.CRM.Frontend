@@ -22,7 +22,7 @@ const Home: React.FC = () => {
 
   const [totalDeals, setTotalDeals] = useState<number>(0);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
-  const [page, setPage] = useState<number>(0);
+  const [page] = useState<number>(0);
   const limit = 10;
 
   // isLoading controls the UI display for loading state
@@ -38,8 +38,8 @@ const Home: React.FC = () => {
       return;
     }
 
-    isFetchingDealsRef.current = true;
     setIsLoading(true);
+    isFetchingDealsRef.current = true;
 
     try {
       const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
@@ -49,8 +49,8 @@ const Home: React.FC = () => {
     } catch (error) {
       console.error('Error fetching deals:', error);
     } finally {
-      setIsLoading(false);
       isFetchingDealsRef.current = false;
+      setIsLoading(false);
     }
   }
 
@@ -122,10 +122,12 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     void fetchCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     void fetchDeals();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -168,7 +170,12 @@ const Home: React.FC = () => {
           </Grid>
         </Grid>
       )}
-      <AddNewModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AddNewModal
+        open={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+        }}
+      />
     </>
   );
 };

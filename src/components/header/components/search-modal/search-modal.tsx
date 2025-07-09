@@ -87,36 +87,36 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const isFetchingRef = useRef(false);
-
-  const controller = new AbortController();
+  const DEBOUNCE_DELAY = 1500;
 
   useEffect(() => {
-    if (!query) {
-      setDeals([]);
-      setCustomers([]);
-      return;
-    }
+    const handler = setTimeout(async () => {
+      if (!query) {
+        setDeals([]);
+        setCustomers([]);
+        return;
+      }
+
+      await fetchData(query);
+    }, DEBOUNCE_DELAY);
+
+    return (): void => clearTimeout(handler); // clear timeout on each keystroke
   }, [query]);
 
   async function fetchData(query: string): Promise<void> {
-    if (isFetchingRef.current) {
-      return;
-    }
+    if (isFetchingRef.current) return;
 
     isFetchingRef.current = true;
     setIsLoading(true);
 
     try {
       const [dealsResponse, customersResponse] = await Promise.all([
-        api.get<{ data: Deal[]; total: number }>(`/deals?search=${encodeURIComponent(query)}`),
-        api.get<{ data: { items: Customer[]; total: number } }>(`/customers?search=${encodeURIComponent(query)}`),
+        api.get<{ data: Deal[]; total: number }>(`/deals?limit=2&offset=0&search=${encodeURIComponent(query)}`),
+        api.get<{ data: { items: Customer[]; total: number } }>(`/customers?limit=2&offset=0&search=${encodeURIComponent(query)}`),
       ]);
 
-      const dealsData = dealsResponse.data.data || [];
-      const customersData = customersResponse.data.data.items || [];
-
-      setDeals(dealsData);
-      setCustomers(customersData);
+      setDeals(dealsResponse.data.data || []);
+      setCustomers(customersResponse.data.data.items || []);
     } catch (error) {
       console.error(`Error fetching ${query}:`, error);
     } finally {
@@ -153,8 +153,8 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
           overflowY: 'auto',
         }}
       >
-        {/* Search Input */}
         <Box
+          className="search-input"
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -190,7 +190,7 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
         {!query && (
           <>
             <Typography variant="overline" mt={3} mb={1.5} px={1} color="text.secondary">
-              Recent Searches
+              TMS-CRM
             </Typography>
             <List dense disablePadding>
               {tmsSearch.map(({ name, path, icon }) => (
@@ -208,7 +208,7 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
                   }}
                   onClick={() => setQuery(name)} // usar 'name' para a query
                 >
-                  <ListItemIcon>{icon /* já é um JSX Element com Tooltip */}</ListItemIcon>
+                  <ListItemIcon>{icon}</ListItemIcon>
                   <ListItemText primary={name} />
                 </ListItem>
               ))}

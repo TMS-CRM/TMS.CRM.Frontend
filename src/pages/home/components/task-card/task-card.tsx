@@ -20,13 +20,13 @@ const TaskCard: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskUuid, setTaskUuid] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
 
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const limit = 8;
 
@@ -34,7 +34,27 @@ const TaskCard: React.FC = () => {
     void fetchTasks();
   }, [page]);
 
-  // async function fetchTasks(): Promise<void> {
+  async function fetchTasks(): Promise<void> {
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const response = await api.get<{ data: { items: Task[]; total: number } }>(`/tasks?limit=${limit}&offset=${page * limit}`);
+      const responseData = response.data.data;
+      setTasks(responseData.items);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      isFetchingRef.current = false;
+      setIsLoading(false);
+    }
+  }
+
+  // function fetchTasks(): void {
   //   if (isFetchingRef.current) {
   //     return;
   //   }
@@ -43,7 +63,14 @@ const TaskCard: React.FC = () => {
   //   setIsLoading(true);
 
   //   try {
-  //     const response = await api.get(`/tasks?limit=${limit}&offset=${page * limit}`);
+  //     const response = {
+  //       data: {
+  //         data: {
+  //           items: [],
+  //           total: 0,
+  //         },
+  //       },
+  //     };
   //     const responseData = response.data.data;
   //     setTasks(responseData.items);
   //   } catch (error) {
@@ -54,42 +81,11 @@ const TaskCard: React.FC = () => {
   //   }
   // }
 
-  function fetchTasks(): void {
-    if (isFetchingRef.current) {
-      return;
-    }
-
-    isFetchingRef.current = true;
-    setIsLoading(true);
-
-    try {
-      const response = {
-        data: {
-          data: {
-            items: [],
-            total: 0,
-          },
-        },
-      };
-      const responseData = response.data.data;
-      setTasks(responseData.items);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    } finally {
-      setIsLoading(false);
-      isFetchingRef.current = false;
-    }
-  }
-
   // async function handleTaskListChange(): Promise<void> {
   //   setPage(0);
   //   setTasks([]);
   //   await fetchTasks();
   // }
-
-  if (isLoading) {
-    return <Typography sx={{ p: 4 }}>Loading tasks...</Typography>;
-  }
 
   function getStatusIcon(task: Task): JSX.Element | null {
     const currentDate = new Date();
@@ -111,8 +107,12 @@ const TaskCard: React.FC = () => {
 
   return (
     <>
-      {tasks.length > 0 ? (
-        <Container className="container-task">
+      <Container className="container-task">
+        {isLoading ? (
+          <EmptyState message="Loading tasks..." />
+        ) : tasks.length === 0 ? (
+          <EmptyState message="No upcoming tasks found." icon={<ChecklistOutlined />} />
+        ) : (
           <Card className="task-card">
             <CardContent className="card-content-task">
               <Box className="header-task-card">
@@ -190,17 +190,8 @@ const TaskCard: React.FC = () => {
               <ArrowForwardOutlinedIcon className="arrow-task-card" />
             </Box>
           </Card>
-        </Container>
-      ) : (
-        <Card
-          className="task-card"
-          sx={{
-            height: { xs: 290, sm: 350, md: 400 },
-          }}
-        >
-          <EmptyState message="No upcoming tasks found." icon={<ChecklistOutlined />} />
-        </Card>
-      )}
+        )}
+      </Container>
 
       <TaskModal
         open={isModalOpen}

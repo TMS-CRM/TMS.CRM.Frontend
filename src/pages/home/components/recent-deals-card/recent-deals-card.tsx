@@ -10,8 +10,9 @@ import { type Deal } from '../../../../types/deal';
 
 const RecentDealsCard: React.FC = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
-  const [, setIsLoading] = useState<boolean>(false);
   const [page] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const limit = 4;
 
   const isFetchingRef = useRef(false);
@@ -71,8 +72,12 @@ const RecentDealsCard: React.FC = () => {
 
   return (
     <>
-      {deals.length > 0 ? (
-        <Card className="card-recent-deals">
+      <Card className="card-recent-deals">
+        {isLoading ? (
+          <EmptyState message="Loading recent deals..." />
+        ) : deals.length === 0 ? (
+          <EmptyState message="No deal found." icon={<BusinessCenterOutlinedIcon />} />
+        ) : (
           <CardContent>
             <Box className="header-recent-deal">
               <Typography variant="h5" color="secondary">
@@ -111,19 +116,8 @@ const RecentDealsCard: React.FC = () => {
               </Box>
             ))}
           </CardContent>
-        </Card>
-      ) : (
-        <Card
-          className="card-recent-deals"
-          sx={{
-            height: { xs: 290, sm: 350, md: 400 },
-          }}
-        >
-          <CardContent>
-            <EmptyState message="No deal found." icon={<BusinessCenterOutlinedIcon />} />
-          </CardContent>
-        </Card>
-      )}
+        )}
+      </Card>
     </>
   );
 };

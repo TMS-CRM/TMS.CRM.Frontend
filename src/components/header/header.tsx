@@ -12,8 +12,8 @@ import { useHeader } from '../../hooks/use-header';
 import { api } from '../../services/api';
 // import type { Tenant } from '../../types/tenant';
 import './header.css';
-import type { Tenant } from '../../types/auth-context';
 import CommandSearchModal from './components/search-modal/search-modal';
+import type { Tenant } from '../../types/tenant';
 
 const Header: React.FC = () => {
   const { button, title } = useHeader();
@@ -99,6 +99,16 @@ const Header: React.FC = () => {
     void navigate(`/`);
   }
 
+  function getInitials(name?: string): string {
+    if (!name) return '';
+
+    const words = name.trim().split(' ').filter(Boolean);
+    const first = words[0]?.charAt(0) ?? '';
+    const second = words[1]?.charAt(0) ?? '';
+
+    return (first + second).toUpperCase() || '?';
+  }
+
   return (
     <>
       <Backdrop open={isLoadingTenantTransition} sx={{ zIndex: 1500 }}>
@@ -140,7 +150,11 @@ const Header: React.FC = () => {
                 aria-haspopup="true"
                 aria-expanded={open ? 'true' : undefined}
               >
-                <Avatar src={defaultAvatar} alt="User" sx={{ width: 40, height: 40 }} />
+                {user?.firstName ? (
+                  <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>{getInitials(user.firstName)}</Avatar>
+                ) : (
+                  <Avatar src={defaultAvatar} alt="User" sx={{ width: 40, height: 40 }} />
+                )}
               </IconButton>
             </Tooltip>
 
@@ -163,7 +177,7 @@ const Header: React.FC = () => {
               transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
               <Typography variant="caption" sx={{ pl: 2, pb: 0.5, fontWeight: 500, color: 'text.secondary' }}>
-                Switch account
+                {' Switch account'}
               </Typography>
 
               <Divider sx={{ my: 1.5 }} />

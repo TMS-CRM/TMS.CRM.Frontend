@@ -7,6 +7,7 @@ import Background from '../../../../assets/background.png';
 import Dote from '../../../../assets/dote.png';
 import AlertSnackbar from '../../../../components/alert-snackbar/alert-snackbar';
 import DealFormModal from '../../../../components/deal-form-modal/deal-form-modal';
+import EmptyState from '../../../../components/empty-state/empty-state';
 import SelectCustomerModal from '../../../../components/select-customer-modal/select-customer-modal';
 // import { api } from '../../../../services/api';
 import { api } from '../../../../services/api';
@@ -18,10 +19,9 @@ const NextAppointmentCard: React.FC = () => {
   const [addNewDealOpen, setAddNewDealOpen] = useState(false);
   const [selectedCustomerUuid, setSelectedCustomerUuid] = useState<string | null>(null);
 
-  const [, setIsLoading] = useState<boolean>(false);
-
-  // modal fade transition loading
   const [, setIsLoadingModalTransition] = useState(false);
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const defaultImage = 'https://archive.org/download/placeholder-image/placeholder-image.jpg';
 
@@ -46,7 +46,9 @@ const NextAppointmentCard: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await api.get<{ data: { items: Deal[] } }>('deals?from=now&order=asc&progress=InProgress,Pending&limit=1&offset=0');
+      const response = await api.get<{ data: { items: Deal[]; total: number } }>(
+        'deals?from=now&order=asc&progress=InProgress,Pending&limit=1&offset=0',
+      );
       const responseData = response.data.data;
       console.log('responseData.items', responseData.items);
 
@@ -56,6 +58,7 @@ const NextAppointmentCard: React.FC = () => {
     } finally {
       isFetchingRef.current = false;
       setIsLoading(false);
+
       setIsLoadingModalTransition(false);
     }
   }
@@ -100,10 +103,28 @@ const NextAppointmentCard: React.FC = () => {
 
   return (
     <>
-      {deal.length > 0 ? (
-        deal.map((deal) => (
-          <Card key={deal?.uuid} className="card-next-appointment">
-            <CardContent>
+      <Card className="card-next-appointment">
+        {isLoading ? (
+          <CardContent>
+            <Typography variant="body2" color="white">
+              Loading next appointment...
+            </Typography>
+          </CardContent>
+        ) : deal.length === 0 ? (
+          <CardContent className="not-found-card-content">
+            <Box className="box-content-not-found-next-appointment">
+              <CalendarMonthOutlinedIcon className="icon-not-found-next-appointment" />
+            </Box>
+
+            <Box className="footer-card-next-appointment-not-found" sx={{ marginTop: 'auto' }}>
+              <Button className="add-new-deal-not-found-next-appointment" variant="outlined" color="inherit" onClick={() => setIsModalOpen(true)}>
+                Add Deal?
+              </Button>
+            </Box>
+          </CardContent>
+        ) : (
+          deal.map((item) => (
+            <CardContent key={item.uuid}>
               <Box className="header-card-next-appointment">
                 <Typography variant="h5">Next Appointment</Typography>
                 <img className="dote" src={Dote} alt="dote" width={10} height={10} />
@@ -111,7 +132,7 @@ const NextAppointmentCard: React.FC = () => {
 
               <Box className="address-card-next-appointment">
                 <img
-                  src={deal?.imageUrl ?? defaultImage}
+                  src={item?.imageUrl ?? defaultImage}
                   alt="Deal Image"
                   style={{
                     width: '44px',
@@ -123,10 +144,10 @@ const NextAppointmentCard: React.FC = () => {
 
                 <Box marginLeft={1.5} fontSize={14}>
                   <Typography variant="body1" color="white">
-                    {deal?.street}
+                    {item?.street}
                   </Typography>
                   <Typography variant="body2" color="#D6E1E6">
-                    {deal?.city}, {deal?.state} {deal?.zipCode}
+                    {item?.city}, {item?.state} {item?.zipCode}
                   </Typography>
                 </Box>
               </Box>
@@ -137,8 +158,8 @@ const NextAppointmentCard: React.FC = () => {
                     Appointment Date
                   </Typography>
                   <Typography variant="body1" color="white">
-                    {deal?.appointmentDate
-                      ? new Date(deal.appointmentDate).toLocaleString('en-US', {
+                    {item?.appointmentDate
+                      ? new Date(item.appointmentDate).toLocaleString('en-US', {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',
@@ -156,7 +177,7 @@ const NextAppointmentCard: React.FC = () => {
                     Room Area
                   </Typography>
                   <Typography variant="body1" color="white">
-                    {deal?.roomArea} M<sup style={{ fontSize: '0.6em' }}>2</sup>
+                    {item?.roomArea} M<sup style={{ fontSize: '0.6em' }}>2</sup>
                   </Typography>
                 </Box>
 
@@ -165,50 +186,31 @@ const NextAppointmentCard: React.FC = () => {
                     People
                   </Typography>
                   <Typography variant="body1" color="white">
-                    {deal?.numberOfPeople}
+                    {item?.numberOfPeople}
                   </Typography>
                 </Box>
               </Box>
 
               <Box className="footer-card-next-appointment">
-                <Box display={'flex'} flexDirection={'column'}>
+                <Box display="flex" flexDirection="column">
                   <Typography variant="body2" color="#D6E1E6">
                     Price
                   </Typography>
                   <Typography variant="body1" color="white">
-                    ${deal?.price}
+                    ${item?.price}
                   </Typography>
                 </Box>
 
-                <Button className="see-detail-next-appointment" variant="outlined" onClick={() => handleDealClick(deal.uuid)}>
+                <Button className="see-detail-next-appointment" variant="outlined" onClick={() => handleDealClick(item.uuid)}>
                   See Detail
                 </Button>
               </Box>
 
               <img src={Background} alt="Background" width={300} height={300} className="bg-image-next-appointment" />
             </CardContent>
-          </Card>
-        ))
-      ) : (
-        <Card
-          className="card-next-appointment"
-          sx={{
-            height: { xs: 290, sm: 350, md: 400 },
-          }}
-        >
-          <CardContent className="not-found-card-content">
-            <Box className="box-content-not-found-next-appointment">
-              <CalendarMonthOutlinedIcon className="icon-not-found-next-appointment" />
-            </Box>
-
-            <Box className="footer-card-next-appointment-not-found" sx={{ marginTop: 'auto' }}>
-              <Button className="add-new-deal-not-found-next-appointment" variant="outlined" color="inherit" onClick={() => setIsModalOpen(true)}>
-                Add Deal?
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      )}
+          ))
+        )}
+      </Card>
 
       <SelectCustomerModal
         open={isModalOpen}

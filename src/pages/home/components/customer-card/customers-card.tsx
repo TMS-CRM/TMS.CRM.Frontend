@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import EmptyState from '../../../../components/empty-state/empty-state';
 import { api } from '../../../../services/api';
 import type { Customer } from '../../../../types/customer';
-
 const EditIcon = <DriveFileRenameOutlineOutlinedIcon className="edit-icon-customer-card" />;
 
 const CustomerCard: React.FC = () => {
@@ -17,7 +16,8 @@ const CustomerCard: React.FC = () => {
   const isFetchingRef = useRef(false);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const [page] = useState(0);
   const limit = 3;
 
@@ -42,8 +42,8 @@ const CustomerCard: React.FC = () => {
     } catch (error) {
       console.error('Error fetching tasks:', error);
     } finally {
-      setIsLoading(false);
       isFetchingRef.current = false;
+      setIsLoading(false);
     }
   }
 
@@ -75,18 +75,18 @@ const CustomerCard: React.FC = () => {
   //   }
   // }
 
-  if (isLoading) {
-    return <EmptyState message={'Loading tasks...'} />;
-  }
-
   function handleCustomerClick(): void {
     void navigate('/customers');
   }
 
   return (
     <>
-      {customers.length > 0 ? (
-        <Card className="customer-card">
+      <Card className="customer-card">
+        {isLoading ? (
+          <EmptyState message="Loading customers..." />
+        ) : customers.length === 0 ? (
+          <EmptyState message="No customers found." icon={<PeopleAltOutlined />} />
+        ) : (
           <CardContent>
             <Box className="header-customer-card">
               <Typography variant="h5" color="secondary">
@@ -121,17 +121,8 @@ const CustomerCard: React.FC = () => {
               ))}
             </Box>
           </CardContent>
-        </Card>
-      ) : (
-        <Card
-          className="customer-card"
-          sx={{
-            height: { xs: 290, sm: 350, md: 400 },
-          }}
-        >
-          <EmptyState message="No customers found." icon={<PeopleAltOutlined />} />
-        </Card>
-      )}
+        )}
+      </Card>
     </>
   );
 };

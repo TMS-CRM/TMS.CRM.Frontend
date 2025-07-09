@@ -15,8 +15,7 @@ import { BusinessCenterOutlined } from '@mui/icons-material';
 const DealProgressCard: React.FC = () => {
   const [deal, setDeal] = useState<Deal[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const navigate = useNavigate();
 
@@ -46,8 +45,8 @@ const DealProgressCard: React.FC = () => {
     } catch (error) {
       console.error('Error fetching deal in progress:', error);
     } finally {
-      setIsLoading(false);
       isFetchingRef.current = false;
+      setIsLoading(false);
     }
   }
 
@@ -93,7 +92,6 @@ const DealProgressCard: React.FC = () => {
       console.error('Error fetching activities:', error);
     } finally {
       isFetchingRef.current = false;
-      setIsLoading(false);
     }
   }
 
@@ -103,10 +101,14 @@ const DealProgressCard: React.FC = () => {
 
   return (
     <>
-      {deal.length > 0 ? (
-        deal.map((deal: Deal) => (
-          <Card key={deal.uuid} className="recent-card" onClick={() => handleDealClick(deal.uuid)}>
-            <CardContent>
+      <Card className="recent-card">
+        {isLoading ? (
+          <EmptyState message="Loading recent deals..." />
+        ) : deal.length === 0 ? (
+          <EmptyState message="No deal in progress." icon={<BusinessCenterOutlined />} />
+        ) : (
+          deal.map((deal: Deal) => (
+            <CardContent key={deal.uuid} onClick={() => handleDealClick(deal.uuid)}>
               <Grid container className="header-progress-card">
                 <Grid size={{ xs: 12, md: 8 }} className="deal-profile">
                   <Avatar src={deal.imageUrl} alt="Profile" />
@@ -158,20 +160,9 @@ const DealProgressCard: React.FC = () => {
                 </Button>
               </Box>
             </CardContent>
-          </Card>
-        ))
-      ) : (
-        <Card
-          className="recent-card"
-          sx={{
-            height: { xs: 290, sm: 350, md: 400 },
-          }}
-        >
-          <CardContent>
-            <EmptyState message="No deal in progress." icon={<BusinessCenterOutlined />} />
-          </CardContent>
-        </Card>
-      )}
+          ))
+        )}
+      </Card>
     </>
   );
 };
