@@ -41,14 +41,25 @@ const ActivityList: React.FC<ActivityCardProps> = (props: ActivityCardProps) => 
 
   useEffect(() => {
     if (props.forceRefresh) {
-      goToPage(0);
+      void forceRefresh();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props, props.forceRefresh]);
+  }, [props.forceRefresh]);
 
   useEffect(() => {
-    void fetchActivites(0);
+    void fetchActivites(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function forceRefresh(): Promise<void> {
+    await goToPage(0);
+    props.onForceRefreshed();
+  }
+
+  async function goToPage(newPage: number): Promise<void> {
+    setPage(newPage);
+    await fetchActivites(newPage);
+  }
 
   async function fetchActivites(currentPage: number): Promise<void> {
     if (isFetchingRef.current) {
@@ -73,11 +84,6 @@ const ActivityList: React.FC<ActivityCardProps> = (props: ActivityCardProps) => 
       setIsLoading(false);
       setIsLoadingModalTransition(false);
     }
-  }
-
-  function goToPage(newPage: number): void {
-    setPage(newPage);
-    void fetchActivites(newPage);
   }
 
   return (
@@ -139,7 +145,7 @@ const ActivityList: React.FC<ActivityCardProps> = (props: ActivityCardProps) => 
             <Button
               variant="text"
               onClick={() => {
-                goToPage(Math.max(0, page - 1));
+                void goToPage(Math.max(0, page - 1));
               }}
               disabled={page === 0 || isLoading}
             >
@@ -157,7 +163,7 @@ const ActivityList: React.FC<ActivityCardProps> = (props: ActivityCardProps) => 
                 if (page + 1 >= totalPages) return;
 
                 setIsLoadingModalTransition(true);
-                goToPage(page + 1);
+                void goToPage(page + 1);
               }}
               disabled={page + 1 >= Math.ceil(totalActivites / limit) || isLoading || isLoadingModalTransition}
             >
@@ -179,7 +185,7 @@ const ActivityList: React.FC<ActivityCardProps> = (props: ActivityCardProps) => 
           setSnackbarOpen(true);
         }}
         onUpdated={() => {
-          goToPage(0);
+          void goToPage(0);
         }}
       />
 

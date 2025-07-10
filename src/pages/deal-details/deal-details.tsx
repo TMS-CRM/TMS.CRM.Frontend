@@ -1,6 +1,6 @@
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import DriveFileRenameOutlineOutlinedIcon from '@mui/icons-material/DriveFileRenameOutlineOutlined';
-import { Avatar, Box, Button, CircularProgress, Typography } from '@mui/material';
+import { Avatar, Backdrop, Box, Button, CircularProgress, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -29,6 +29,7 @@ const DealDetails: React.FC = () => {
 
   // isLoading controls the UI display for loading state
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingModalTransition, setIsLoadingModalTransition] = useState(false);
 
   // isFetchingRef controls fetching state to avoid duplicates
   const isFetchingRef = useRef(false);
@@ -107,6 +108,10 @@ const DealDetails: React.FC = () => {
 
   return (
     <>
+      <Backdrop open={isLoadingModalTransition} sx={{ zIndex: 1500 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       <Grid container spacing={3} padding={0}>
         {isLoading ? (
           <Grid size={{ xs: 12 }} sx={{ textAlign: 'center', paddingTop: '150px' }}>
@@ -151,7 +156,17 @@ const DealDetails: React.FC = () => {
                       </Typography>
                     </Box>
                     <Box className="deal-details-actions">
-                      <Button className="button-actions-id-page" onClick={() => setEditDealOpen(true)}>
+                      <Button
+                        className="button-actions-id-page"
+                        onClick={() => {
+                          setIsLoadingModalTransition(true);
+
+                          setTimeout(() => {
+                            setEditDealOpen(true);
+                            setIsLoadingModalTransition(false);
+                          }, 400);
+                        }}
+                      >
                         <DriveFileRenameOutlineOutlinedIcon className="icon-deal-page" />
                       </Button>
                       <Button

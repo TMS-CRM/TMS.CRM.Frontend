@@ -6,14 +6,12 @@ import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import '../../styles/modal.css';
-import { api } from '../../services/api';
-import type { User } from '../../types/user';
-import AlertSnackbar from '../alert-snackbar/alert-snackbar';
-import TextFieldController from '../form/text-field-controller';
+import '../../../../styles/modal.css';
+import TextFieldController from '../../../../components/form/text-field-controller';
+import { api } from '../../../../services/api';
 
 interface UserModalProps {
   onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;

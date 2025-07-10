@@ -1,75 +1,16 @@
-import { BusinessCenterOutlined, ChecklistOutlined, DashboardOutlined, PeopleAltOutlined } from '@mui/icons-material';
-import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
-import BusinessCenterIcon from '@mui/icons-material/BusinessCenter'; // para Deals
-import CloseIcon from '@mui/icons-material/Close';
-import GroupIcon from '@mui/icons-material/Group'; // para Customers
-import HistoryIcon from '@mui/icons-material/History';
-import SearchIcon from '@mui/icons-material/Search';
-import SearchOffIcon from '@mui/icons-material/SearchOff';
-import { Box, Divider, IconButton, InputBase, List, ListItem, ListItemIcon, ListItemText, Modal, Tooltip, Typography } from '@mui/material';
+import { BusinessCenterOutlined, Close as CloseIcon, PeopleAltOutlined, Search as SearchIcon, SearchOff as SearchOffIcon } from '@mui/icons-material';
+import { Box, Button, IconButton, InputBase, Modal, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../../../../services/api';
-
-const tmsSearch = [
-  {
-    name: 'Home',
-    title: 'Home',
-    path: '/',
-    icon: (
-      <Tooltip title="Home" placement="right">
-        <DashboardOutlined className="icon-menu" />
-      </Tooltip>
-    ),
-  },
-  {
-    name: 'Deals',
-    title: 'Deals',
-    path: '/deals',
-    icon: (
-      <Tooltip title="Deals" placement="right">
-        <BusinessCenterOutlined className="icon-menu" />
-      </Tooltip>
-    ),
-  },
-  {
-    name: 'Customers',
-    title: 'Customers',
-    path: '/customers',
-    icon: (
-      <Tooltip title="Customers" placement="right">
-        <PeopleAltOutlined className="icon-menu" />
-      </Tooltip>
-    ),
-  },
-  {
-    name: 'Tasks',
-    title: 'Tasks',
-    path: '/tasks',
-    icon: (
-      <Tooltip title="Tasks" placement="right">
-        <ChecklistOutlined className="icon-menu" />
-      </Tooltip>
-    ),
-  },
-  {
-    name: 'Users',
-    title: 'Users',
-    path: '/users',
-    icon: (
-      <Tooltip title="Users" placement="right">
-        <AssignmentIndOutlinedIcon className="icon-menu" />
-      </Tooltip>
-    ),
-  },
-];
+import EmptyState from '../../../empty-state/empty-state';
 
 interface Deal {
-  id: string;
-  title: string;
+  uuid: string;
+  name: string;
 }
 
 interface Customer {
-  id: string;
+  uuid: string;
   name: string;
 }
 
@@ -84,10 +25,17 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
 
   const [deals, setDeals] = useState<Deal[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [totalCustomers, setTotalCustomers] = useState<number>(0);
+  const [totalDeals, setTotalDeals] = useState<number>(0);
 
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const isFetchingRef = useRef(false);
-  const DEBOUNCE_DELAY = 1500;
+
+  const [dealPage, setDealPage] = useState(0);
+  const [customerPage, setCustomerPage] = useState(0);
+
+  const delay = 1500;
+  const pageSize = 2;
 
   useEffect(() => {
     const handler = setTimeout(async () => {
@@ -98,12 +46,70 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
       }
 
       await fetchData(query);
-    }, DEBOUNCE_DELAY);
+    }, delay);
 
     return (): void => clearTimeout(handler); // clear timeout on each keystroke
   }, [query]);
 
+  function setPageAndRefresh(newPage: number): void {
+    if (dealPage) {
+      setDealPage(newPage);
+      void fetchDeals(newPage);
+    } else if (customerPage) {
+      setCustomerPage(newPage);
+      void fetchCustomers(newPage);
+    }
+  }
+
+  async function fetchDeals(currentPage: number): Promise<void> {
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const response = await api.get<{ data: { items: Deal[]; total: number } }>(`/deals?limit=${pageSize}&offset=${dealPage * pageSize}`);
+      const responseData = response.data.data;
+
+      setDeals((prevDeals) => (currentPage === 0 ? responseData.items : [...prevDeals, ...responseData.items]));
+      setTotalDeals(responseData.total);
+    } catch (error) {
+      console.error('Error fetching deals:', error);
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }
+
+  async function fetchCustomers(currentPage: number): Promise<void> {
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const response = await api.get<{ data: { items: Customer[]; total: number } }>(
+        `/customers?limit=${pageSize}&offset=${customerPage * pageSize}`,
+      );
+      const responseData = response.data.data;
+
+      setCustomers((prevCustomers) => (currentPage === 0 ? responseData.items : [...prevCustomers, ...responseData.items]));
+      setTotalCustomers(responseData.total);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }
+
   async function fetchData(query: string): Promise<void> {
+    const searchValue = encodeURIComponent(query);
+
     if (isFetchingRef.current) return;
 
     isFetchingRef.current = true;
@@ -111,12 +117,15 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
 
     try {
       const [dealsResponse, customersResponse] = await Promise.all([
-        api.get<{ data: Deal[]; total: number }>(`/deals?limit=2&offset=0&search=${encodeURIComponent(query)}`),
-        api.get<{ data: { items: Customer[]; total: number } }>(`/customers?limit=2&offset=0&search=${encodeURIComponent(query)}`),
+        api.get<{ data: { items: Deal[]; total: number } }>(`/deals?limit=${pageSize}&offset=0&search=${searchValue}`),
+        api.get<{ data: { items: Customer[]; total: number } }>(`/customers?limit=${pageSize}&offset=0&search=${searchValue}`),
       ]);
 
-      setDeals(dealsResponse.data.data || []);
-      setCustomers(customersResponse.data.data.items || []);
+      setDeals(dealsResponse.data.data.items);
+      setTotalDeals(dealsResponse.data.data.total);
+
+      setCustomers(customersResponse.data.data.items);
+      setTotalCustomers(customersResponse.data.data.total);
     } catch (error) {
       console.error(`Error fetching ${query}:`, error);
     } finally {
@@ -132,6 +141,8 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
       setQuery('');
       setDeals([]);
       setCustomers([]);
+      setDealPage(0);
+      setCustomerPage(0);
     }
   }, [open]);
 
@@ -153,8 +164,8 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
           overflowY: 'auto',
         }}
       >
+        {/* Search Input */}
         <Box
-          className="search-input"
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -171,13 +182,13 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
             inputRef={inputRef}
             placeholder="Search anything..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            fullWidth
-            sx={{
-              fontSize: '1rem',
-              fontWeight: 400,
-              color: 'text.primary',
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setDealPage(0);
+              setCustomerPage(0);
             }}
+            fullWidth
+            sx={{ fontSize: '1rem', fontWeight: 400, color: 'text.primary' }}
           />
           {query && (
             <IconButton size="small" onClick={() => setQuery('')}>
@@ -186,113 +197,142 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
           )}
         </Box>
 
-        {/* Quando query está vazia */}
+        {/* No query */}
         {!query && (
-          <>
-            <Typography variant="overline" mt={3} mb={1.5} px={1} color="text.secondary">
-              TMS-CRM
-            </Typography>
-            <List dense disablePadding>
-              {tmsSearch.map(({ name, path, icon }) => (
-                <ListItem
-                  key={path}
-                  sx={{
-                    px: 2,
-                    py: 1,
-                    borderRadius: 2,
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s ease-in-out',
-                    '&:hover': {
-                      backgroundColor: '#f0f0f0',
-                    },
-                  }}
-                  onClick={() => setQuery(name)} // usar 'name' para a query
-                >
-                  <ListItemIcon>{icon}</ListItemIcon>
-                  <ListItemText primary={name} />
-                </ListItem>
-              ))}
-            </List>
-
-            <Divider sx={{ my: 3 }} />
-          </>
+          <Box
+            sx={{
+              px: 2,
+              py: 3,
+              textAlign: 'center',
+              color: 'text.secondary',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <SearchIcon sx={{ fontSize: 40 }} />
+            <Typography variant="h6">Start typing to search</Typography>
+            <Typography variant="body2">Try searching for a deal, customer or user.</Typography>
+          </Box>
         )}
 
-        {/* Quando tem query, mostra resultados */}
+        {/* Query with results */}
         {query && (
           <>
             <Typography variant="body2" color="secondary" px={1} pb={1}>
               Results for: <strong>{query}</strong>
             </Typography>
 
-            {(isLoading || deals.length || customers.length) && (
-              <>
-                {deals.length > 0 && (
-                  <>
-                    <Typography variant="subtitle2" px={1} mb={1} color="text.primary">
-                      Deals
-                    </Typography>
-                    <List dense disablePadding>
-                      {deals.map((deal) => (
-                        <ListItem
-                          component="button"
-                          key={deal.id}
-                          sx={{
-                            px: 2,
-                            py: 1,
-                            borderRadius: 2,
-                            '&:hover': { backgroundColor: '#f0f0f0' },
-                          }}
-                          onClick={() => {
-                            // handle click (ex: navegar)
-                            console.log('Clicked deal', deal);
-                            onClose();
-                          }}
-                        >
-                          <ListItemIcon>
-                            <BusinessCenterIcon fontSize="small" color="primary" />
-                          </ListItemIcon>
-                          <ListItemText primary={deal.title} />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </>
-                )}
+            {isLoading && <EmptyState message="Loading..." />}
 
-                {customers.length > 0 && (
-                  <>
-                    <Typography variant="subtitle2" px={1} mt={2} mb={1} color="text.primary">
-                      Customers
-                    </Typography>
-                    <List dense disablePadding>
-                      {customers.map((cust) => (
-                        <ListItem
-                          component="button"
-                          key={cust.id}
-                          sx={{
-                            px: 2,
-                            py: 1,
-                            borderRadius: 2,
-                            '&:hover': { backgroundColor: '#f0f0f0' },
-                          }}
-                          onClick={() => {
-                            console.log('Clicked customer', cust);
-                            onClose();
-                          }}
-                        >
-                          <ListItemIcon>
-                            <GroupIcon fontSize="small" color="success" />
-                          </ListItemIcon>
-                          <ListItemText primary={cust.name} />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </>
-                )}
+            {!isLoading && deals.length > 0 && (
+              <>
+                <Typography variant="caption" px={1} mb={1}>
+                  Deals
+                </Typography>
+                <Box display="flex" flexDirection="column" gap={1}>
+                  {deals.map((deal) => (
+                    <Box
+                      key={deal.uuid}
+                      onClick={() => {
+                        console.log('Clicked deal', deal);
+                        onClose();
+                      }}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        px: 2,
+                        py: 1.5,
+                        borderRadius: 2,
+                        backgroundColor: '#f9f9f9',
+                        boxShadow: 1,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: '#f0f0f0',
+                          boxShadow: 2,
+                        },
+                      }}
+                    >
+                      <BusinessCenterOutlined fontSize="small" color="primary" />
+                      <Box>
+                        <Typography variant="body1" fontWeight={500}>
+                          {deal.name}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Load More button */}
+                <Box textAlign="center" mt={2}>
+                  <Button
+                    variant="outlined"
+                    disabled={isLoading || deals.length >= totalDeals}
+                    onClick={() => setPageAndRefresh(dealPage + 1)}
+                    sx={{ marginTop: '16px', justifyContent: 'center', display: 'flex', backgroundColor: '#ececfe', color: '#514ef3' }}
+                  >
+                    Load more deal
+                  </Button>
+                </Box>
               </>
             )}
 
-            {/* Loading e sem resultados */}
+            {!isLoading && customers.length > 0 && (
+              <>
+                <Typography variant="caption" px={1} mt={2} mb={1}>
+                  Customers
+                </Typography>
+                <Box display="flex" flexDirection="column" gap={1}>
+                  {customers.map((cust) => (
+                    <Box
+                      key={cust.uuid}
+                      onClick={() => {
+                        console.log('Clicked deal', cust);
+                        onClose();
+                      }}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        px: 2,
+                        py: 1.5,
+                        borderRadius: 2,
+                        backgroundColor: '#f9f9f9',
+                        boxShadow: 1,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: '#f0f0f0',
+                          boxShadow: 2,
+                        },
+                      }}
+                    >
+                      <PeopleAltOutlined fontSize="small" color="primary" />
+                      <Box>
+                        <Typography variant="body1" fontWeight={500}>
+                          {cust.name}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Load More button */}
+                <Box textAlign="center" mt={2}>
+                  <Button
+                    variant="outlined"
+                    disabled={isLoading || customers.length >= totalCustomers}
+                    onClick={() => setPageAndRefresh(customerPage + 1)}
+                    sx={{ marginTop: '16px', justifyContent: 'center', display: 'flex', backgroundColor: '#ececfe', color: '#514ef3' }}
+                  >
+                    Load more customer
+                  </Button>
+                </Box>
+              </>
+            )}
+
+            {/* No results */}
             {!isLoading && deals.length === 0 && customers.length === 0 && (
               <Box
                 sx={{
@@ -306,11 +346,14 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 1.5,
+                  gap: 2,
                 }}
               >
-                <Typography variant="body2">No results found</Typography>
-                <SearchOffIcon sx={{ width: 40, height: 40, color: 'text.disabled' }} />
+                <SearchOffIcon sx={{ width: 50, height: 50, color: 'text.disabled' }} />
+                <Typography variant="h6">No results</Typography>
+                <Typography variant="body2">
+                  We couldn’t find anything matching <strong>“{query}”</strong>.
+                </Typography>
               </Box>
             )}
           </>

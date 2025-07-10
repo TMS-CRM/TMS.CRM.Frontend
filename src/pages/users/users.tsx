@@ -9,10 +9,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import AlertSnackbar from '../../components/alert-snackbar/alert-snackbar';
 import EmptyState from '../../components/empty-state/empty-state';
 import SectionHeader from '../../components/section-header/section-header';
-import UserFormModal from '../../components/user-form-modal/user-form-modal';
 import { useHeader } from '../../hooks/use-header';
 import { api } from '../../services/api';
 import type { User } from '../../types/user';
+import UserFormModal from './components/user-form-modal/user-form-modal';
 
 const Users: React.FC = () => {
   const { setTitle, setButton } = useHeader();

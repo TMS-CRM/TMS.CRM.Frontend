@@ -1,7 +1,7 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import '../../../../styles/modal.css';
 import './activity-form-card.css';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -25,8 +25,6 @@ interface ActivityFormCardProps {
 const ActivityFormCard: React.FC<ActivityFormCardProps> = (props: ActivityFormCardProps) => {
   const [fileName, setFileName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const isFetchingRef = useRef(false);
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];

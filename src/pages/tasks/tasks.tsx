@@ -3,7 +3,19 @@ import AddIcon from '@mui/icons-material/Add';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import DriveFileRenameOutlineOutlinedIcon from '@mui/icons-material/DriveFileRenameOutlineOutlined';
 import ReportIcon from '@mui/icons-material/Report';
-import { Button, CircularProgress, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import {
+  Backdrop,
+  Button,
+  CircularProgress,
+  Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
 import React from 'react';
 import { type JSX, useEffect, useRef, useState } from 'react';
 import AlertSnackbar from '../../components/alert-snackbar/alert-snackbar';
@@ -33,6 +45,8 @@ const Tasks: React.FC = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingModalTransition, setIsLoadingModalTransition] = useState(false);
+
   const limit = 10;
 
   // isFetchingRef controls fetching state to avoid duplicates
@@ -113,6 +127,10 @@ const Tasks: React.FC = () => {
 
   return (
     <main>
+      <Backdrop open={isLoadingModalTransition} sx={{ zIndex: 1500 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       <Grid container sx={{ padding: { xs: '12px', sm: '16px', md: '24px ' } }}>
         {isLoading ? (
           <Grid size={{ xs: 12 }} sx={{ textAlign: 'center', paddingTop: '150px' }}>
@@ -154,7 +172,12 @@ const Tasks: React.FC = () => {
                         <TableRow
                           onClick={() => {
                             setSelectedTaskUuid(task.uuid);
-                            setIsModalOpen(true);
+                            setIsLoadingModalTransition(true);
+
+                            setTimeout(() => {
+                              setIsModalOpen(true);
+                              setIsLoadingModalTransition(false);
+                            }, 400);
                           }}
                           sx={{ cursor: 'pointer' }}
                         >
