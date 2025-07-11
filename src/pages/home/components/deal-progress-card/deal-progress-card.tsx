@@ -103,7 +103,7 @@ const DealProgressCard: React.FC = () => {
     <>
       <Card className="recent-card">
         {isLoading ? (
-          <EmptyState message="Loading recent deals..." />
+          <EmptyState message="Loading deal and activities..." />
         ) : deal.length === 0 ? (
           <EmptyState message="No deal in progress." icon={<BusinessCenterOutlined />} />
         ) : (

@@ -2,7 +2,7 @@ import { ChecklistOutlined } from '@mui/icons-material';
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import ReportIcon from '@mui/icons-material/Report';
-import { Box, Button, Card, CardContent, Container, Typography } from '@mui/material';
+import { Backdrop, Box, Button, Card, CardContent, CircularProgress, Container, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import React, { Fragment, type JSX, useEffect, useRef, useState } from 'react';
 import './task-card.css';
@@ -20,7 +20,9 @@ const TaskCard: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskUuid, setTaskUuid] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingModalTransition, setIsLoadingModalTransition] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>('');
@@ -31,10 +33,16 @@ const TaskCard: React.FC = () => {
   const limit = 8;
 
   useEffect(() => {
-    void fetchTasks();
-  }, [page]);
+    void fetchTasks(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  async function fetchTasks(): Promise<void> {
+  function setPageAndRefresh(newPage: number): void {
+    setPage(newPage);
+    void fetchTasks(newPage);
+  }
+
+  async function fetchTasks(currentPage: number): Promise<void> {
     if (isFetchingRef.current) {
       return;
     }
@@ -45,47 +53,16 @@ const TaskCard: React.FC = () => {
     try {
       const response = await api.get<{ data: { items: Task[]; total: number } }>(`/tasks?limit=${limit}&offset=${page * limit}`);
       const responseData = response.data.data;
-      setTasks(responseData.items);
+
+      setTasks((prevTasks) => (currentPage === 0 ? responseData.items : [...prevTasks, ...responseData.items]));
+      // setTotalTasks(responseData.total);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     } finally {
-      isFetchingRef.current = false;
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }
-
-  // function fetchTasks(): void {
-  //   if (isFetchingRef.current) {
-  //     return;
-  //   }
-
-  //   isFetchingRef.current = true;
-  //   setIsLoading(true);
-
-  //   try {
-  //     const response = {
-  //       data: {
-  //         data: {
-  //           items: [],
-  //           total: 0,
-  //         },
-  //       },
-  //     };
-  //     const responseData = response.data.data;
-  //     setTasks(responseData.items);
-  //   } catch (error) {
-  //     console.error('Error fetching tasks:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //     isFetchingRef.current = false;
-  //   }
-  // }
-
-  // async function handleTaskListChange(): Promise<void> {
-  //   setPage(0);
-  //   setTasks([]);
-  //   await fetchTasks();
-  // }
 
   function getStatusIcon(task: Task): JSX.Element | null {
     const currentDate = new Date();
@@ -107,6 +84,10 @@ const TaskCard: React.FC = () => {
 
   return (
     <>
+      <Backdrop open={isLoadingModalTransition} sx={{ zIndex: 1500 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       <Container className="container-task">
         {isLoading ? (
           <EmptyState message="Loading tasks..." />
@@ -142,9 +123,14 @@ const TaskCard: React.FC = () => {
                       className="task-body"
                       onClick={() => {
                         setTaskUuid(task.uuid);
-                        setIsModalOpen(true);
+                        setIsLoadingModalTransition(true);
+
+                        setTimeout(() => {
+                          setIsModalOpen(true);
+                          setIsLoadingModalTransition(false);
+                        }, 400);
                       }}
-                      sx={{ mb: 3 }} // Add margin bottom for line height between tasks
+                      sx={{ mb: 3 }}
                     >
                       <Grid size={{ xs: 8, sm: 5, md: 4, lg: 4.5 }}>
                         <Box className="date-icon-conatiner">
@@ -177,16 +163,14 @@ const TaskCard: React.FC = () => {
               </Box>
             </CardContent>
 
-            <Box className="add-new-task-box">
-              <Button
-                onClick={() => {
-                  setTaskUuid(null);
-                  setIsModalOpen(true);
-                }}
-                className="add-new-task-button"
-              >
-                Add new task
-              </Button>
+            <Box
+              className="add-new-task-box"
+              onClick={() => {
+                setTaskUuid(null);
+                setIsModalOpen(true);
+              }}
+            >
+              <Button className="add-new-task-button">Add new task</Button>
               <ArrowForwardOutlinedIcon className="arrow-task-card" />
             </Box>
           </Card>
@@ -195,7 +179,12 @@ const TaskCard: React.FC = () => {
 
       <TaskModal
         open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={(refresh: boolean) => {
+          setIsModalOpen(false);
+          if (refresh) {
+            setPageAndRefresh(0);
+          }
+        }}
         onShowSnackbar={(message, severity) => {
           setSnackbarMessage(message);
           setSnackbarSeverity(severity);

@@ -61,6 +61,7 @@ const Tasks: React.FC = () => {
         endIcon={<AddIcon sx={{ color: 'white' }} />}
         onClick={() => {
           setIsModalOpen(true);
+          setSelectedTaskUuid(null);
         }}
       >
         Add New Task

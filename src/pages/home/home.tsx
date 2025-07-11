@@ -20,6 +20,9 @@ const Home: React.FC = () => {
   const { setTitle, setButton } = useHeader();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [customerRefreshKey, setCustomerRefreshKey] = useState(0);
+  const [dealRefreshKey, setDealRefreshKey] = useState(0);
+
   const [totalDeals, setTotalDeals] = useState<number>(0);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
   const [page] = useState<number>(0);
@@ -165,7 +168,7 @@ const Home: React.FC = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 12, lg: 3.5 }}>
-            <CustomersCard />
+            <CustomersCard refreshKey={customerRefreshKey} />
             <TaskCard />
           </Grid>
         </Grid>
@@ -175,6 +178,8 @@ const Home: React.FC = () => {
         onClose={() => {
           setIsModalOpen(false);
         }}
+        onCustomerCreated={() => setCustomerRefreshKey((prev) => prev + 1)}
+        onDealCreated={() => setDealRefreshKey((prev) => prev + 1)}
       />
     </>
   );

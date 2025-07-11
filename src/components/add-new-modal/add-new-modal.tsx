@@ -12,7 +12,9 @@ import SelectCustomerModal from '../select-customer-modal/select-customer-modal'
 
 interface AddNewFormProps {
   open: boolean;
-  onClose: () => void;
+  onClose: (refresh: boolean) => void;
+  onCustomerCreated: () => void;
+  onDealCreated: () => void;
 }
 
 const AddNewModal: React.FC<AddNewFormProps> = (props: AddNewFormProps) => {
@@ -29,13 +31,19 @@ const AddNewModal: React.FC<AddNewFormProps> = (props: AddNewFormProps) => {
   // modal fade transition loading
   const [isLoadingModalTransition, setIsLoadingModalTransition] = useState(false);
 
+  function handleCancel(): void {
+    if (props.open) {
+      props.onClose(false);
+    }
+  }
+
   return (
     <>
       <Backdrop open={isLoadingModalTransition} sx={{ zIndex: 1500 }}>
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      <Modal open={props.open} onClose={props.onClose}>
+      <Modal open={props.open} onClose={() => props.onClose(false)}>
         <Box
           className="box"
           sx={{
@@ -47,7 +55,7 @@ const AddNewModal: React.FC<AddNewFormProps> = (props: AddNewFormProps) => {
               <Typography variant="body2">Add New</Typography>
             </Box>
             <Box>
-              <Button endIcon={<CancelIcon className="close-icon" />} onClick={props.onClose} />
+              <Button endIcon={<CancelIcon className="close-icon" />} onClick={handleCancel} />
             </Box>
           </Box>
 
@@ -106,8 +114,11 @@ const AddNewModal: React.FC<AddNewFormProps> = (props: AddNewFormProps) => {
       <DealFormModal
         dealUuid={null}
         open={addNewDealOpen}
-        onClose={() => {
+        onClose={(refresh: boolean) => {
           setAddNewDealOpen(false);
+          if (refresh) {
+            props.onDealCreated(); // ← Notify parent (Home)
+          }
         }}
         onChangeCustomerRequested={() => {
           setAddNewDealOpen(false);
@@ -128,8 +139,11 @@ const AddNewModal: React.FC<AddNewFormProps> = (props: AddNewFormProps) => {
       <CustomerFormModal
         open={addNewCustomerOpen}
         customerUuid={null}
-        onClose={() => {
+        onClose={(refresh: boolean) => {
           setAddNewCustomerOpen(false);
+          if (refresh) {
+            props.onCustomerCreated(); // ← Notify parent (Home)
+          }
         }}
         onShowSnackbar={(message, severity) => {
           setSnackbarMessage(message);

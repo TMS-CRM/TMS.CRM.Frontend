@@ -9,7 +9,11 @@ import { api } from '../../../../services/api';
 import type { Customer } from '../../../../types/customer';
 const EditIcon = <DriveFileRenameOutlineOutlinedIcon className="edit-icon-customer-card" />;
 
-const CustomerCard: React.FC = () => {
+interface CustomerCardProps {
+  refreshKey: number;
+}
+
+const CustomerCard: React.FC<CustomerCardProps> = (props: CustomerCardProps) => {
   // const [customerUuid, setCustomerUuid] = useState<number | null>(null);
   const navigate = useNavigate();
 
@@ -24,7 +28,7 @@ const CustomerCard: React.FC = () => {
   useEffect(() => {
     void fetchCustomers(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [props.refreshKey]);
 
   async function fetchCustomers(currentPage: number): Promise<void> {
     if (isFetchingRef.current) {

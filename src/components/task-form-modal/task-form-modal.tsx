@@ -11,6 +11,7 @@ import '../../styles/modal.css';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { api } from '../../services/api';
+import EmptyState from '../empty-state/empty-state';
 import CheckboxController from '../form/check-box-controller';
 import DatePickerController from '../form/date-picker-controller';
 import TextFieldController from '../form/text-field-controller';
@@ -32,6 +33,7 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [wasDeleted, setWasDeleted] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isFetchingRef = useRef(false);
 
@@ -112,6 +114,9 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
   }
 
   const handleDelete = async (): Promise<void> => {
+    if (!props.taskUuid) return;
+    setIsDeleting(true);
+
     try {
       await api.delete(`/tasks/${props.taskUuid}`);
 
@@ -124,6 +129,8 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
     } catch (error) {
       console.error('Error deleting task:', error);
       props.onShowSnackbar?.('Failed to delete task', 'deleted');
+    } finally {
+      setIsDeleting(true);
     }
   };
 
@@ -132,10 +139,6 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
     if (props.open) {
       props.onClose(false);
     }
-  }
-
-  if (isLoading) {
-    return <Typography sx={{ p: 4 }}>Loading task...</Typography>;
   }
 
   return (
@@ -147,55 +150,62 @@ const TaskModal: React.FC<TaskModalProps> = (props: TaskModalProps) => {
             width: { xs: 290, sm: 350, md: 400 },
           }}
         >
-          <Box className="form-title">
-            <Typography variant="h5" className="title-header-modal">
-              {props.taskUuid ? 'Edit Task' : ' Add New Task'}
-            </Typography>
-            <Button sx={{ minWidth: 0, margin: 0 }} endIcon={<CancelIcon sx={{ color: '#7E92A2' }} />} onClick={handleCancel} />
-          </Box>
-          <FormProvider {...form}>
-            <Box className="form-container">
-              {props.taskUuid && (
-                <Box className="completed-container">
-                  <Typography className="label">Completed?</Typography>
-                  <CheckboxController name="completed" className="check-box-icon-modal" />
-                </Box>
-              )}
-
-              <TextFieldController name="description" type="text" multiline rows={4} placeholder="Enter task description" />
-
-              <Box className="due-date-box-new-task">
-                <Typography variant="body1" className="label">
-                  Due Date
+          {isLoading ? (
+            <EmptyState message="Loading task..." />
+          ) : (
+            <>
+              <Box className="form-title">
+                <Typography variant="h5" className="title-header-modal">
+                  {props.taskUuid ? 'Edit Task' : 'Add New Task'}
                 </Typography>
-                <DatePickerController name="dueDate" />
+                <Button sx={{ minWidth: 0, margin: 0 }} endIcon={<CancelIcon sx={{ color: '#7E92A2' }} />} onClick={handleCancel} />
               </Box>
 
-              <Box className="footer-new-task">
-                {!props.taskUuid && (
-                  <Button onClick={handleCancel} variant="text" className="button-task button-task--cancel">
-                    Cancel
-                  </Button>
-                )}
+              <FormProvider {...form}>
+                <Box className="form-container">
+                  {props.taskUuid && (
+                    <Box className="completed-container">
+                      <Typography className="label">Completed?</Typography>
+                      <CheckboxController name="completed" className="check-box-icon-modal" />
+                    </Box>
+                  )}
 
-                {props.taskUuid && (
-                  <Button
-                    onClick={() => {
-                      void handleDelete();
-                    }}
-                    variant="text"
-                    className="button-task button-task--delete"
-                  >
-                    Delete
-                  </Button>
-                )}
+                  <TextFieldController name="description" type="text" multiline rows={4} placeholder="Enter task description" />
 
-                <Button variant="contained" onClick={form.handleSubmit(onSubmit)} className="save-button-task" disabled={!form.formState.isDirty}>
-                  {isSubmitting ? <CircularProgress size={20} color="inherit" /> : props.taskUuid ? 'Done' : 'Save Task'}
-                </Button>
-              </Box>
-            </Box>
-          </FormProvider>
+                  <Box className="due-date-box-new-task">
+                    <Typography variant="body1" className="label">
+                      Due Date
+                    </Typography>
+                    <DatePickerController name="dueDate" />
+                  </Box>
+
+                  <Box className="footer-new-task">
+                    {!props.taskUuid && (
+                      <Button onClick={handleCancel} variant="text" className="button-task button-task--cancel">
+                        Cancel
+                      </Button>
+                    )}
+
+                    {props.taskUuid && (
+                      <Button
+                        onClick={() => {
+                          void handleDelete();
+                        }}
+                        variant="text"
+                        className="button-task button-task--delete"
+                      >
+                        {isDeleting ? <CircularProgress size={20} color="inherit" /> : 'Delete'}
+                      </Button>
+                    )}
+
+                    <Button variant="contained" onClick={form.handleSubmit(onSubmit)} className="save-button-task" disabled={!form.formState.isDirty}>
+                      {isSubmitting ? <CircularProgress size={20} color="inherit" /> : props.taskUuid ? 'Done' : 'Save Task'}
+                    </Button>
+                  </Box>
+                </Box>
+              </FormProvider>
+            </>
+          )}
         </Box>
       </Modal>
     </>
