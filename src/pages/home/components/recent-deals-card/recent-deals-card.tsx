@@ -8,7 +8,11 @@ import EmptyState from '../../../../components/empty-state/empty-state';
 import { api } from '../../../../services/api';
 import { type Deal } from '../../../../types/deal';
 
-const RecentDealsCard: React.FC = () => {
+interface RecentDealsCardProps {
+  refreshKey: boolean;
+}
+
+const RecentDealsCard: React.FC<RecentDealsCardProps> = (props: RecentDealsCardProps) => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [page] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -20,10 +24,11 @@ const RecentDealsCard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    void fetchDeals();
-  }, [page]);
+    void fetchDeals(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.refreshKey]);
 
-  async function fetchDeals(): Promise<void> {
+  async function fetchDeals(currentPage: number): Promise<void> {
     if (isFetchingRef.current) {
       return;
     }
@@ -34,7 +39,8 @@ const RecentDealsCard: React.FC = () => {
     try {
       const response = await api.get<{ data: { items: Deal[]; total: number } }>(`/deals?sortBy=createdOn&order=desc&limit=${limit}&offset=0`);
       const responseData = response.data.data;
-      setDeals(responseData.items);
+
+      setDeals((prevDeals) => (currentPage === 0 ? responseData.items : [...prevDeals, ...responseData.items]));
     } catch (error) {
       console.error('Error fetching deals:', error);
     } finally {

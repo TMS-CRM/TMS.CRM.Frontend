@@ -13,7 +13,11 @@ import SelectCustomerModal from '../../../../components/select-customer-modal/se
 import { api } from '../../../../services/api';
 import type { Deal } from '../../../../types/deal';
 
-const NextAppointmentCard: React.FC = () => {
+interface NextAppointmentCardProps {
+  refreshKey: boolean;
+}
+
+const NextAppointmentCard: React.FC<NextAppointmentCardProps> = (props: NextAppointmentCardProps) => {
   const [deal, setDeal] = useState<Deal[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addNewDealOpen, setAddNewDealOpen] = useState(false);
@@ -35,7 +39,7 @@ const NextAppointmentCard: React.FC = () => {
 
   useEffect(() => {
     void fetchNextAppointment();
-  }, []);
+  }, [props.refreshKey]);
 
   async function fetchNextAppointment(): Promise<void> {
     if (isFetchingRef.current) {

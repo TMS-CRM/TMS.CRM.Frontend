@@ -12,7 +12,11 @@ import { type Activity } from '../../../../types/activity';
 import { type Deal } from '../../../../types/deal';
 import { BusinessCenterOutlined } from '@mui/icons-material';
 
-const DealProgressCard: React.FC = () => {
+interface DealProgressCardProps {
+  refreshKey: boolean;
+}
+
+const DealProgressCard: React.FC<DealProgressCardProps> = (props: DealProgressCardProps) => {
   const [deal, setDeal] = useState<Deal[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -23,7 +27,8 @@ const DealProgressCard: React.FC = () => {
 
   useEffect(() => {
     void fetchDealInProgressAndActivities();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.refreshKey]);
 
   async function fetchDealInProgressAndActivities(): Promise<void> {
     if (isFetchingRef.current) {

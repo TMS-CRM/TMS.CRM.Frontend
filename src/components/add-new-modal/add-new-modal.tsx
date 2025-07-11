@@ -117,7 +117,7 @@ const AddNewModal: React.FC<AddNewFormProps> = (props: AddNewFormProps) => {
         onClose={(refresh: boolean) => {
           setAddNewDealOpen(false);
           if (refresh) {
-            props.onDealCreated(); // ← Notify parent (Home)
+            props.onDealCreated();
           }
         }}
         onChangeCustomerRequested={() => {
