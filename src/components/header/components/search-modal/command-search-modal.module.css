@@ -36,6 +36,19 @@
   font-size: 13px;
 }
 
+.noResults {
+  padding: 16px 24px;
+  background-color: #fafafa;
+  border-radius: 16px;
+  border: 1px dashed #ccc;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: rgba(0, 123, 255, 0.08);
+}
+
 @media (max-width: 426px) {
   .searchBox {
     font-size: 14px;

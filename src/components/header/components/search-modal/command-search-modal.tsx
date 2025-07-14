@@ -188,8 +188,10 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
       setQuery('');
       setDeals([]);
       setCustomers([]);
+      setUsers([]);
       setDealPage(0);
       setCustomerPage(0);
+      setUserPage(0);
     }
   }, [open]);
 
@@ -226,6 +228,7 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
               setQuery(e.target.value);
               setDealPage(0);
               setCustomerPage(0);
+              setUserPage(0);
             }}
             fullWidth
             className={styles.searchBox}
@@ -348,7 +351,7 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
                       disabled={isLoading || customers.length >= totalCustomers}
                       onClick={() => setPageAndRefresh(dealPage + 1)}
                     >
-                      Load more deals
+                      Load more customers
                     </Button>
                   </Box>
                 </Paper>
@@ -395,7 +398,7 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
                     disabled={isLoading || users.length >= totalUsers}
                     onClick={() => setPageAndRefresh(dealPage + 1)}
                   >
-                    Load more deals
+                    Load more users
                   </Button>
                 </Box>
               </Paper>
@@ -403,23 +406,9 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
 
             {/* No results */}
             {!isLoading && deals.length === 0 && customers.length === 0 && (
-              <Box
-                sx={{
-                  px: 2,
-                  py: 3,
-                  bgcolor: '#fafafa',
-                  borderRadius: 2,
-                  border: '1px dashed #ccc',
-                  textAlign: 'center',
-                  color: 'text.disabled',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 2,
-                }}
-              >
-                <SearchOffIcon sx={{ width: 50, height: 50, color: 'text.disabled' }} />
-                <Typography variant="h6">No results</Typography>
+              <Box className={styles.noResults}>
+                <SearchOffIcon sx={{ width: 50, height: 50 }} />
+                <Typography variant="h3">No results</Typography>
                 <Typography variant="body2">
                   We couldn’t find anything matching <strong>“{query}”</strong>.
                 </Typography>
