@@ -7,7 +7,7 @@
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
   overflow-y: auto;
   scrollbar-width: thin;
-  max-height: 650px;
+  max-height: 600px;
   border-radius: 12px;
   z-index: 1300;
   outline: none;
@@ -123,6 +123,9 @@
 }
 
 @media (max-width: 375px) {
+  .box {
+    max-height: 500px;
+  }
   .form-title {
     padding: 22px;
   }

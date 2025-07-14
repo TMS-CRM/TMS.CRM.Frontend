@@ -1,5 +1,5 @@
+import { BusinessCenterOutlined } from '@mui/icons-material';
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
-import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
 import { Avatar, Box, Button, Card, CardContent, Divider, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { useEffect, useRef, useState } from 'react';
@@ -10,10 +10,9 @@ import RadioIcon from '../../../../components/radio-icon/radio-icon';
 import { api } from '../../../../services/api';
 import { type Activity } from '../../../../types/activity';
 import { type Deal } from '../../../../types/deal';
-import { BusinessCenterOutlined } from '@mui/icons-material';
 
 interface DealProgressCardProps {
-  refreshKey: boolean;
+  refreshKey: number;
 }
 
 const DealProgressCard: React.FC<DealProgressCardProps> = (props: DealProgressCardProps) => {
@@ -134,36 +133,40 @@ const DealProgressCard: React.FC<DealProgressCardProps> = (props: DealProgressCa
               </Grid>
 
               <Divider className="divider-deal-progress" />
+              {activities.length === 0 ? (
+                <EmptyState message="No activity logged." icon={<BusinessCenterOutlined />} />
+              ) : (
+                <>
+                  {activities.map((act) => (
+                    <Box key={act.uuid} className="activities-container">
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <RadioIcon />
+                        <Box>
+                          <Typography variant="body2">
+                            {act.date
+                              ? new Date(deal.appointmentDate).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })
+                              : ''}
+                          </Typography>
 
-              {activities &&
-                activities.map((act) => (
-                  <Box key={act.uuid} className="activities-container">
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <RadioIcon />
-                      <Box>
-                        <Typography variant="body2">
-                          {act.date
-                            ? new Date(deal.appointmentDate).toLocaleString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })
-                            : ''}
-                        </Typography>
-
-                        <Typography variant="body2" className="activity-details">
-                          {act.description}
-                        </Typography>
+                          <Typography variant="body2" className="activity-details">
+                            {act.description}
+                          </Typography>
+                        </Box>
                       </Box>
                     </Box>
-                  </Box>
-                ))}
+                  ))}
 
-              <Box className="load-more-deal-progress">
-                <Button variant="text" color="primary" className="footer-button">
-                  Load More
-                </Button>
-              </Box>
+                  <Box className="load-more-deal-progress">
+                    <Button variant="text" color="primary" className="footer-button">
+                      Load More
+                    </Button>
+                  </Box>
+                </>
+              )}
             </CardContent>
           ))
         )}

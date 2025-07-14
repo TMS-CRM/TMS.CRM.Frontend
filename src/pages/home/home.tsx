@@ -20,8 +20,8 @@ const Home: React.FC = () => {
   const { setTitle, setButton } = useHeader();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [customerRefreshKey, setCustomerRefreshKey] = useState<boolean>(false);
-  const [dealRefreshKey, setDealRefreshKey] = useState<boolean>(false);
+  const [customerRefreshKey, setCustomerRefreshKey] = useState<number>(0);
+  const [dealRefreshKey, setDealRefreshKey] = useState<number>(0);
 
   const [totalDeals, setTotalDeals] = useState<number>(0);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
@@ -56,50 +56,6 @@ const Home: React.FC = () => {
       setIsLoading(false);
     }
   }
-
-  // function fetchDeals(): void {
-  //   if (isFetchingDealsRef.current) {
-  //     return;
-  //   }
-
-  //   isFetchingDealsRef.current = true;
-  //   setIsLoading(true);
-
-  //   try {
-  //     // const response = await api.get<{ data: { total: number } }>(`/deals?limit=${limit}&offset=${page * limit}`);
-  //     const response = { data: { data: { total: 0 } } };
-  //     const responseData = response.data.data;
-
-  //     setTotalDeals(responseData.total);
-  //   } catch (error) {
-  //     console.error('Error fetching deals:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //     isFetchingDealsRef.current = false;
-  //   }
-  // }
-
-  // function fetchCustomers(): void {
-  //   if (isFetchingCustomersRef.current) {
-  //     return;
-  //   }
-
-  //   isFetchingCustomersRef.current = true;
-  //   setIsLoading(true);
-
-  //   try {
-  //     const response = { data: { data: { total: 0 } } };
-
-  //     const responseData = response.data.data;
-
-  //     setTotalCustomers(responseData.total);
-  //   } catch (error) {
-  //     console.error('Error fetching customers:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //     isFetchingCustomersRef.current = false;
-  //   }
-  // }
 
   async function fetchCustomers(): Promise<void> {
     if (isFetchingCustomersRef.current) {

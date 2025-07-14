@@ -10,7 +10,7 @@ import type { Customer } from '../../../../types/customer';
 const EditIcon = <DriveFileRenameOutlineOutlinedIcon className="edit-icon-customer-card" />;
 
 interface CustomerCardProps {
-  refreshKey: boolean;
+  refreshKey: number;
 }
 
 const CustomerCard: React.FC<CustomerCardProps> = (props: CustomerCardProps) => {

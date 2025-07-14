@@ -142,7 +142,7 @@ const AddNewModal: React.FC<AddNewFormProps> = (props: AddNewFormProps) => {
         onClose={(refresh: boolean) => {
           setAddNewCustomerOpen(false);
           if (refresh) {
-            props.onCustomerCreated(); // ← Notify parent (Home)
+            props.onCustomerCreated();
           }
         }}
         onShowSnackbar={(message, severity) => {

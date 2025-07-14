@@ -69,7 +69,7 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
     roomArea: yup.number().required('Room area is required'),
     numberOfPeople: yup.number().required('Number of people is required'),
     appointmentDate: yup.date().nullable().required('Appointment date is required'),
-    progress: yup.mixed<DealProgressType>().oneOf(['Pending', 'InProgress', 'Closed'], 'Invalid progress option').required('Progress is required'),
+    progress: yup.mixed<DealProgressType>().oneOf(['InProgress', 'Pending', 'Closed'], 'Invalid progress option').required('Progress is required'),
     specialInstructions: yup.string().required('Special instructions are required'),
     roomAccess: yup
       .mixed<DealRoomAccessType>()
@@ -186,6 +186,7 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
     try {
       if (props.dealUuid) {
         await api.put(`/deals/${props.dealUuid}`, formData);
+        console.log('deal: ', formData);
       } else {
         await api.post('/deals', formData);
       }
@@ -355,9 +356,9 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                         name="progress"
                         skeletonOnLoading
                         options={[
-                          { value: DealProgress.Closed.id, label: DealProgress.Closed.label },
                           { value: DealProgress.InProgress.id, label: DealProgress.InProgress.label },
                           { value: DealProgress.Pending.id, label: DealProgress.Pending.label },
+                          { value: DealProgress.Closed.id, label: DealProgress.Closed.label },
                         ]}
                       />
                     </Grid>

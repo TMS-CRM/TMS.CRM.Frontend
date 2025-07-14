@@ -25,7 +25,7 @@ import TaskModal from '../../components/task-form-modal/task-form-modal';
 import { useHeader } from '../../hooks/use-header';
 import { api } from '../../services/api';
 import type { Task } from '../../types/task';
-import './tasks.css';
+// import './tasks.css';
 
 const Tasks: React.FC = () => {
   const { setTitle, setButton } = useHeader();
@@ -142,24 +142,18 @@ const Tasks: React.FC = () => {
         ) : (
           <>
             <Grid size={{ xs: 12, md: 12 }}>
-              <SectionHeader
-                title="Tasks"
-                counter={totalTasks}
-                sortByValue={['Date Created', 'Alphabetic']}
-                filterOptions={['Area', 'Price', 'Status']}
-              />
+              <SectionHeader title="Tasks" counter={totalTasks} sortByValue={['Date Created', 'Alphabetic']} filterOptions={['Complete']} />
             </Grid>
             <Grid size={{ xs: 12, md: 12 }}>
               <TableContainer>
                 <Table>
-                  <TableHead sx={{ display: { xs: 'none', sm: 'table-header-group' } }}>
+                  <TableHead>
                     <TableRow>
                       {columnHeaders.map((header, index) => (
                         <TableCell
                           key={index}
                           sx={{
                             textAlign: header.isRightAligned ? 'right' : 'left',
-                            display: header.label === 'Edit' ? { xs: 'none', sm: 'table-cell' } : 'table-cell',
                           }}
                         >
                           {header.icon ?? header.label}
@@ -183,24 +177,12 @@ const Tasks: React.FC = () => {
                           sx={{ cursor: 'pointer' }}
                         >
                           {/* Icon */}
-                          <TableCell
-                            sx={{
-                              width: { xs: 'auto', sm: '3%' },
-                              whiteSpace: 'nowrap',
-                              verticalAlign: 'top',
-                            }}
-                          >
+                          <TableCell>
                             <Typography variant="caption">{getStatusIcon(task)}</Typography>
                           </TableCell>
 
                           {/* Date */}
-                          <TableCell
-                            sx={{
-                              width: { xs: 'auto', sm: '20%' },
-                              whiteSpace: 'nowrap',
-                              verticalAlign: 'top',
-                            }}
-                          >
+                          <TableCell>
                             <Typography
                               variant="caption"
                               sx={{
@@ -218,34 +200,17 @@ const Tasks: React.FC = () => {
                           </TableCell>
 
                           {/* Description */}
-                          <TableCell
-                            sx={{
-                              width: { xs: 0, sm: '60%' },
-                              whiteSpace: 'normal',
-                              display: { xs: 'none', sm: 'table-cell' },
-                              verticalAlign: 'top',
-                            }}
-                          >
+                          <TableCell>
                             <Typography variant="caption">{task.description}</Typography>
                           </TableCell>
 
                           <TableCell
                             sx={{
-                              display: { xs: 'none', sm: 'table-cell' },
                               textAlign: 'right',
-                              verticalAlign: 'top',
                             }}
                           >
                             <Typography variant="body2">
                               <DriveFileRenameOutlineOutlinedIcon className="table-cell" />
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-
-                        <TableRow sx={{ display: { xs: 'table-row', sm: 'none' } }}>
-                          <TableCell colSpan={4} sx={{ px: 2, pt: 0 }}>
-                            <Typography variant="caption" sx={{ display: 'block' }}>
-                              {task.description}
                             </Typography>
                           </TableCell>
                         </TableRow>

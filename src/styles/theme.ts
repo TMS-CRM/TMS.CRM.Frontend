@@ -72,7 +72,7 @@ const theme = createTheme({
           '@media (max-width: 427px)': {
             width: '50px',
             padding: ' 0 10px',
-            marginTop: '70px',
+            marginTop: '80px',
           },
         },
       },

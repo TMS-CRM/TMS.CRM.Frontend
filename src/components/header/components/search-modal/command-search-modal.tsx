@@ -1,22 +1,8 @@
 import { BusinessCenterOutlined, Close as CloseIcon, PeopleAltOutlined, Search as SearchIcon, SearchOff as SearchOffIcon } from '@mui/icons-material';
-import {
-  Avatar,
-  Box,
-  Button,
-  IconButton,
-  InputBase,
-  Modal,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
+import { Box, Button, IconButton, InputBase, Modal, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import defaultImage from '../../../../assets/default-image.jpg';
+import styles from './command-search-modal.module.css';
 import { api } from '../../../../services/api';
 import type { Customer } from '../../../../types/customer';
 import type { DealWithCustomer } from '../../../../types/deal';
@@ -217,41 +203,24 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
     onClose();
   }
 
+  function handleUserClick(userUuid: string): void {
+    void navigate(`/user-details/${userUuid}`);
+    onClose();
+  }
+
   return (
     <Modal open={open} onClose={onClose}>
       <Box
+        className="box"
         sx={{
-          position: 'absolute',
-          top: '10%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: { xs: '90%', sm: 500 },
-          bgcolor: 'background.paper',
-          borderRadius: 3,
-          boxShadow: 12,
-          p: 3,
-          outline: 'none',
-          maxHeight: '80vh',
-          overflowY: 'auto',
+          padding: 2,
         }}
       >
-        {/* Search Input */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            px: 2,
-            py: 1,
-            borderRadius: 2,
-            backgroundColor: '#f9f9f9',
-            border: '1px solid #e0e0e0',
-          }}
-        >
-          <SearchIcon sx={{ color: 'text.secondary' }} />
+        <Box className={styles.searchInput}>
+          <SearchIcon />
           <InputBase
             inputRef={inputRef}
-            placeholder="Search anything..."
+            placeholder="What are you looking for?"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -259,7 +228,7 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
               setCustomerPage(0);
             }}
             fullWidth
-            sx={{ fontSize: '1rem', fontWeight: 400, color: 'text.primary' }}
+            className={styles.searchBox}
           />
           {query && (
             <IconButton size="small" onClick={() => setQuery('')}>
@@ -270,20 +239,9 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
 
         {/* No query */}
         {!query && (
-          <Box
-            sx={{
-              px: 2,
-              py: 3,
-              textAlign: 'center',
-              color: 'text.secondary',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 2,
-            }}
-          >
+          <Box className={styles.emptyState}>
             <SearchIcon sx={{ fontSize: 40 }} />
-            <Typography variant="h6">Start typing to search</Typography>
+            <Typography variant="h5">Start typing to search</Typography>
             <Typography variant="body2">Try searching for a deal, customer or user.</Typography>
           </Box>
         )}
@@ -332,9 +290,9 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
                     </TableBody>
                   </Table>
 
-                  <Box textAlign="center" py={1}>
+                  <Box className={styles.loadMore}>
                     <Button
-                      sx={{ fontSize: '14px' }}
+                      className={styles.loadMoreButton}
                       variant="text"
                       disabled={isLoading || deals.length >= totalDeals}
                       onClick={() => setPageAndRefresh(dealPage + 1)}
@@ -364,7 +322,12 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
                     </TableHead>
                     <TableBody>
                       {customers.map((cust) => (
-                        <TableRow key={cust.uuid} onClick={() => onClose()} hover sx={{ cursor: 'pointer' }}>
+                        <TableRow
+                          key={cust.uuid}
+                          onClick={() => handleCustomerClick(cust.uuid)}
+                          hover
+                          sx={{ cursor: 'pointer', '& td': { py: 1.5 } }}
+                        >
                           <TableCell>
                             <Typography variant="body2">
                               {cust.firstName} {cust.lastName}
@@ -378,14 +341,14 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
                     </TableBody>
                   </Table>
 
-                  <Box textAlign="center" py={1}>
+                  <Box className={styles.loadMore}>
                     <Button
-                      sx={{ fontSize: '14px' }}
+                      className={styles.loadMoreButton}
                       variant="text"
                       disabled={isLoading || customers.length >= totalCustomers}
-                      onClick={() => setPageAndRefresh(customerPage + 1)}
+                      onClick={() => setPageAndRefresh(dealPage + 1)}
                     >
-                      Load more customers
+                      Load more deals
                     </Button>
                   </Box>
                 </Paper>
@@ -411,7 +374,7 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
                   </TableHead>
                   <TableBody>
                     {users.map((user) => (
-                      <TableRow key={user.uuid} onClick={() => onClose()} hover sx={{ cursor: 'pointer' }}>
+                      <TableRow key={user.uuid} onClick={() => handleUserClick(user.uuid)} hover sx={{ cursor: 'pointer', '& td': { py: 1.5 } }}>
                         <TableCell>
                           <Typography variant="body2" fontWeight={500}>
                             {user.firstName} {user.lastName}
@@ -425,14 +388,14 @@ export const CommandSearchModal: React.FC<CommandSearchModalProps> = ({ open, on
                   </TableBody>
                 </Table>
 
-                <Box textAlign="center" py={1}>
+                <Box className={styles.loadMore}>
                   <Button
-                    sx={{ fontSize: '14px' }}
+                    className={styles.loadMoreButton}
                     variant="text"
                     disabled={isLoading || users.length >= totalUsers}
-                    onClick={() => setPageAndRefresh(userPage + 1)}
+                    onClick={() => setPageAndRefresh(dealPage + 1)}
                   >
-                    Load more users
+                    Load more deals
                   </Button>
                 </Box>
               </Paper>

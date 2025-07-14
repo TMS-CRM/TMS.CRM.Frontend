@@ -9,7 +9,7 @@ import { api } from '../../../../services/api';
 import { type Deal } from '../../../../types/deal';
 
 interface RecentDealsCardProps {
-  refreshKey: boolean;
+  refreshKey: number;
 }
 
 const RecentDealsCard: React.FC<RecentDealsCardProps> = (props: RecentDealsCardProps) => {

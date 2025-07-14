@@ -1,0 +1,48 @@
+.searchInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+}
+
+.searchBox {
+  font-size: 16px;
+  font-weight: 400;
+  flex: 1;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.tableHeader {
+  background-color: #fafafa;
+}
+
+.loadMore {
+  text-align: center;
+  padding: 12px;
+}
+
+.loadMoreButton {
+  font-size: 13px;
+}
+
+@media (max-width: 426px) {
+  .searchBox {
+    font-size: 14px;
+  }
+
+  .emptyState {
+    width: 65vw;
+    padding: 24px 12px;
+  }
+}

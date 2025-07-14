@@ -7,14 +7,12 @@ import Background from '../../../../assets/background.png';
 import Dote from '../../../../assets/dote.png';
 import AlertSnackbar from '../../../../components/alert-snackbar/alert-snackbar';
 import DealFormModal from '../../../../components/deal-form-modal/deal-form-modal';
-import EmptyState from '../../../../components/empty-state/empty-state';
 import SelectCustomerModal from '../../../../components/select-customer-modal/select-customer-modal';
-// import { api } from '../../../../services/api';
 import { api } from '../../../../services/api';
 import type { Deal } from '../../../../types/deal';
 
 interface NextAppointmentCardProps {
-  refreshKey: boolean;
+  refreshKey: number;
 }
 
 const NextAppointmentCard: React.FC<NextAppointmentCardProps> = (props: NextAppointmentCardProps) => {
@@ -51,7 +49,7 @@ const NextAppointmentCard: React.FC<NextAppointmentCardProps> = (props: NextAppo
 
     try {
       const response = await api.get<{ data: { items: Deal[]; total: number } }>(
-        'deals?from=now&order=asc&progress=InProgress,Pending&limit=1&offset=0',
+        'deals?from=now&orderBy=appointment_date&order=asc&progress=InProgress,Pending&limit=1&offset=0',
       );
       const responseData = response.data.data;
       console.log('responseData.items', responseData.items);

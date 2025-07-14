@@ -120,6 +120,13 @@ const Deals: React.FC = () => {
     void navigate(`/deal-details/${dealUuid}`);
   }
 
+  function formatProgress(value: string): string {
+    return value
+      .replace(/([A-Z])/g, ' $1')
+      .trim()
+      .toUpperCase();
+  }
+
   const columnHeaders = [
     { label: 'Profile', icon: <InsertPhotoIcon /> },
     { label: 'Name' },
@@ -219,7 +226,7 @@ const Deals: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Button variant="contained" className={`status-button ${deal.progress}`}>
-                              {deal.progress === 'InProgress' ? 'IN PROGRESS' : 'CLOSED'}
+                              <span>{formatProgress(deal.progress)}</span>
                             </Button>
                           </TableCell>
                           <TableCell>

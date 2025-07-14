@@ -10,9 +10,8 @@ import logo from '../../assets/logo.jpg';
 import { useAuth } from '../../hooks/use-auth';
 import { useHeader } from '../../hooks/use-header';
 import { api } from '../../services/api';
-// import type { Tenant } from '../../types/tenant';
 import './header.css';
-import CommandSearchModal from './components/search-modal/search-modal';
+import CommandSearchModal from './components/search-modal/command-search-modal';
 import type { Tenant } from '../../types/tenant';
 
 const Header: React.FC = () => {
@@ -145,7 +144,7 @@ const Header: React.FC = () => {
               <IconButton
                 onClick={handleAvatarClick}
                 size="small"
-                sx={{ ml: 2 }}
+                sx={{ ml: { xs: 0, sm: 2 } }}
                 aria-controls={open ? 'account-menu' : undefined}
                 aria-haspopup="true"
                 aria-expanded={open ? 'true' : undefined}
@@ -153,7 +152,14 @@ const Header: React.FC = () => {
                 {user?.firstName ? (
                   <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>{getInitials(user.firstName)}</Avatar>
                 ) : (
-                  <Avatar src={defaultAvatar} alt="User" sx={{ width: 40, height: 40 }} />
+                  <Avatar
+                    src={defaultAvatar}
+                    alt="User"
+                    sx={{
+                      width: { xs: 30, sm: 40 },
+                      height: { xs: 30, sm: 40 },
+                    }}
+                  />
                 )}
               </IconButton>
             </Tooltip>
