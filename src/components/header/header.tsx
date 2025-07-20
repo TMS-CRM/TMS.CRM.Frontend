@@ -1,42 +1,65 @@
 import { Search } from '@mui/icons-material';
-import AddIcon from '@mui/icons-material/Add';
+import CheckIcon from '@mui/icons-material/Check';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import { AppBar, Avatar, Button, Typography } from '@mui/material';
+import { AppBar, Avatar, Backdrop, Box, Button, CircularProgress, Divider, Fade, IconButton, Tooltip, Typography } from '@mui/material';
 import { Menu, MenuItem } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import React, { useEffect, useState } from 'react';
-// import logo from '../../assets/logo.jpg';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import logo from '../../assets/logo.jpg';
 import { useAuth } from '../../hooks/use-auth';
 import { useHeader } from '../../hooks/use-header';
-import { HeaderModalType } from '../../types/header-context';
-import type { Tenant } from '../../types/tenant';
-import { mockTenant } from '../../types/tenant';
-import AddNewModal from '../add-new-modal/add-new-modal';
-import AlertSnackbar from '../alert-snackbar/alert-snackbar';
-import CustomerFormModal from '../customer-form-modal/customer-form-modal';
-import DealFormModal from '../deal-form-modal/deal-form-modal';
-import SelectCustomerModal from '../select-customer-modal/select-customer-modal';
-import TaskModal from '../task-form-modal/task-form-modal';
+import { api } from '../../services/api';
 import './header.css';
-import NewUserModal from '../user-form-modal/user-form-modal';
+import CommandSearchModal from './components/search-modal/command-search-modal';
+import type { Tenant } from '../../types/tenant';
 
 const Header: React.FC = () => {
-  // const router = useRouter();
-  const { title, buttonTitle, modalType } = useHeader();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
-  const [addNewDealOpen, setAddNewDealOpen] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
-  const [selectedTenantId, setSelectedTenantId] = useState<number | null>(1);
-  const { signOut } = useAuth();
+  const { button, title } = useHeader();
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const navigate = useNavigate();
+
+  const { signOut, switchTenant } = useAuth();
+
+  const { user, tenantUuid } = useAuth();
 
   const [opacity, setOpacity] = useState(1);
-
-  // Avatar menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+
+  const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
+  const defaultTenantAvatar = 'https://www.gravatar.com/avatar/?d=identicon&f=y';
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingTenantTransition, setIsLoadingTenantTransition] = useState(false);
+
+  const isFetchingRef = useRef(false);
+
+  async function fetchTenants(): Promise<void> {
+    if (isFetchingRef.current || !user?.uuid) return;
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const response = await api.get<{ data: Tenant[] }>(`/users/${user.uuid}/tenants`);
+      const responseData = response.data.data;
+
+      setTenants(() => responseData.sort((a, b) => a.name.localeCompare(b.name)));
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }
+
+  useEffect(() => {
+    void fetchTenants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uuid]);
 
   function handleAvatarClick(event: React.MouseEvent<HTMLElement>): void {
     setAnchorEl(event.currentTarget);
@@ -46,14 +69,18 @@ const Header: React.FC = () => {
     setAnchorEl(null);
   }
 
-  // Handle switch account action and close the menu
-  function handleSwitchAccount(tenantId: number): void {
-    setSelectedTenantId(tenantId);
+  async function handleSwitchAccount(tenant: Tenant): Promise<void> {
+    setIsLoading(true);
+    setIsLoadingTenantTransition(true);
+    await switchTenant({ tenantUuid: tenant.uuid });
+    setIsLoading(false);
+    setIsLoadingTenantTransition(false);
+
+    // setSelectedTenantUuid(tenantUuid);
     handleMenuClose();
   }
 
   async function handleSignOut(): Promise<void> {
-    console.log('Signing out...');
     try {
       await signOut();
     } catch (error) {
@@ -67,74 +94,26 @@ const Header: React.FC = () => {
     return (): void => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  function renderModal(): React.ReactNode {
-    switch (modalType) {
-      case HeaderModalType.newCustomer:
-        return (
-          <CustomerFormModal
-            open={!!isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            customerUuid={null}
-            onShowSnackbar={(message, severity) => {
-              setSnackbarMessage(message);
-              setSnackbarSeverity(severity);
-              setSnackbarOpen(true);
-            }}
-          />
-        );
-      case HeaderModalType.newUser:
-        return <NewUserModal open={!!isModalOpen} onClose={() => setIsModalOpen(false)} />;
-      case HeaderModalType.newTask:
-        return (
-          <TaskModal
-            open={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            taskUuid={null}
-            onShowSnackbar={(message, severity) => {
-              setSnackbarMessage(message);
-              setSnackbarSeverity(severity);
-              setSnackbarOpen(true);
-            }}
-          />
-        );
-      case HeaderModalType.newDeal:
-        return (
-          <>
-            <SelectCustomerModal
-              open={!!isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              onCustomerSelected={(customerId) => {
-                setSelectedCustomerId(customerId);
-                setIsModalOpen(false);
-                setAddNewDealOpen(true);
-              }}
-            />
-            {selectedCustomerId && (
-              <DealFormModal
-                open={addNewDealOpen}
-                onClose={() => {
-                  setAddNewDealOpen(false);
-                }}
-                onChangeCustomerRequested={() => {
-                  setAddNewDealOpen(false);
-                  setIsModalOpen(true);
-                }}
-                customerId={selectedCustomerId}
-              />
-            )}
-          </>
-        );
-      case HeaderModalType.generalAddNew:
-        return <AddNewModal open={!!isModalOpen} onClose={() => setIsModalOpen(false)} />;
-    }
+  function handleIconClick(): void {
+    void navigate(`/`);
   }
 
-  // function handleIconClick(): void {
-  //   // router.push('/');
-  // }
+  function getInitials(name?: string): string {
+    if (!name) return '';
+
+    const words = name.trim().split(' ').filter(Boolean);
+    const first = words[0]?.charAt(0) ?? '';
+    const second = words[1]?.charAt(0) ?? '';
+
+    return (first + second).toUpperCase() || '?';
+  }
 
   return (
     <>
+      <Backdrop open={isLoadingTenantTransition} sx={{ zIndex: 1500 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       <AppBar
         sx={{
           backgroundColor: `rgba(246, 250, 253, ${opacity})`,
@@ -144,7 +123,7 @@ const Header: React.FC = () => {
       >
         <Grid container className="header-container">
           <Grid size={{ xs: 2, sm: 2, md: 2, lg: 1 }} className="logo-header">
-            {/* <Image onClick={handleIconClick} src={logo} alt="Logo" className="logo-image-header" /> */}
+            <img onClick={handleIconClick} src={logo} alt="Logo" className="logo-image-header" />
           </Grid>
 
           <Grid size={{ xs: 0, sm: 5, md: 5, lg: 6 }}>
@@ -154,56 +133,113 @@ const Header: React.FC = () => {
           </Grid>
 
           <Grid size={{ xs: 10, sm: 5, md: 5, lg: 5 }} className="header-actions">
-            {buttonTitle && (
-              <Button
-                className="add-new-header"
-                variant="contained"
-                endIcon={<AddIcon sx={{ color: 'white' }} />}
-                onClick={() => setIsModalOpen(true)}
-              >
-                {buttonTitle}
-              </Button>
-            )}
-            <Search className="search-header" />
-            <Avatar
-              className="avatar-header"
-              src={'https://randomuser.me/api/portraits/women/1.jpg'}
-              alt="User"
-              onClick={handleAvatarClick}
-              sx={{ cursor: 'pointer' }}
+            <>{button}</>
+            <Search
+              className="search-header"
+              onClick={() => {
+                setIsSearchOpen(true);
+              }}
             />
+            <Tooltip title="Switch account">
+              <IconButton
+                onClick={handleAvatarClick}
+                size="small"
+                sx={{ ml: { xs: 0, sm: 2 } }}
+                aria-controls={open ? 'account-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={open ? 'true' : undefined}
+              >
+                {user?.firstName ? (
+                  <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>{getInitials(user.firstName)}</Avatar>
+                ) : (
+                  <Avatar
+                    src={defaultAvatar}
+                    alt="User"
+                    sx={{
+                      width: { xs: 30, sm: 40 },
+                      height: { xs: 30, sm: 40 },
+                    }}
+                  />
+                )}
+              </IconButton>
+            </Tooltip>
+
             <Menu
               anchorEl={anchorEl}
               id="account-menu"
               open={open}
               onClose={handleMenuClose}
-              onClick={handleMenuClose}
-              slotProps={{
-                paper: {
-                  className: 'custom-menu-paper',
-                  elevation: 0,
+              TransitionComponent={Fade}
+              PaperProps={{
+                sx: {
+                  mt: 1.5,
+                  borderRadius: 2,
+                  minWidth: 220,
+                  boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
+                  p: 1,
                 },
               }}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
-              {mockTenant.map((tenant: Tenant) => (
-                <MenuItem
-                  className={`menu-item ${tenant.id === selectedTenantId ? 'selected' : ''}`}
-                  key={tenant.id}
-                  onClick={() => handleSwitchAccount(tenant.id)}
-                >
-                  {/* <Image className="avatar-tenant" src={tenant.avatar} alt="Profile" width={30} height={30} /> */}
-                  {tenant.name}
-                </MenuItem>
-              ))}
+              <Typography variant="caption" sx={{ pl: 2, pb: 0.5, fontWeight: 500, color: 'text.secondary' }}>
+                {' Switch account'}
+              </Typography>
+
+              <Divider sx={{ my: 1.5 }} />
+
+              {tenants?.map((tenant: Tenant) => {
+                const isSelected = tenant.uuid === tenantUuid;
+
+                return (
+                  <MenuItem
+                    key={tenant.uuid}
+                    onClick={() => {
+                      handleMenuClose();
+                      void handleSwitchAccount(tenant);
+                    }}
+                    selected={isSelected}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      borderRadius: 1,
+                      backgroundColor: isSelected ? 'action.selected' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      },
+                    }}
+                  >
+                    <Avatar
+                      src={tenant.avatar || defaultTenantAvatar}
+                      alt={tenant.name}
+                      sx={{ width: 30, height: 30 }}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = defaultTenantAvatar;
+                      }}
+                    />
+                    <Box flex={1} fontSize="0.875rem">
+                      {tenant.name}
+                    </Box>
+                    {isSelected && <CheckIcon fontSize="small" color="primary" />}
+                  </MenuItem>
+                );
+              })}
             </Menu>
-            <Button className="logout-button" variant="text" onClick={handleSignOut}>
+            <Button
+              className="logout-button"
+              variant="text"
+              onClick={() => {
+                void handleSignOut();
+              }}
+            >
               <LogoutOutlinedIcon />
             </Button>
           </Grid>
         </Grid>
-        {renderModal()}
       </AppBar>
-      <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} />
+
+      <CommandSearchModal open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 };

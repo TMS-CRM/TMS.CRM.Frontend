@@ -1,0 +1,16 @@
+.not-found-customer-page {
+  display: flex;
+  align-items: center;
+  justify-content: centerS;
+  color: #7e92a2;
+  background-color: white;
+  padding: 24px;
+  margin-top: 34px;
+  align-items: start;
+  flex: 1;
+}
+
+.icon-not-found-page {
+  color: #7e92a2;
+  margin-right: 13px;
+}

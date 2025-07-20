@@ -1,41 +1,34 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { Box, Button, Modal, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Modal, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../../styles/modal.css';
 import './deal-form-modal.css';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import { type Deal, DealProgress, type DealProgressType, DealRoomAccess, type DealRoomAccessType, mockDeals } from '../../types/deal';
-import AlertSnackbar from '../alert-snackbar/alert-snackbar';
+import { api } from '../../services/api';
+import type { Customer } from '../../types/customer';
+import { DealProgress, type DealProgressType, DealRoomAccess, type DealRoomAccessType, type DealWithCustomer } from '../../types/deal';
 import DatePickerController from '../form/date-picker-controller';
 import SelectController from '../form/select-controller';
 import TextFieldController from '../form/text-field-controller';
 
 interface DealModalProps {
   open: boolean;
-  onClose: () => void;
+  onClose: (refresh: boolean) => void;
+  onShowSnackbar?: (message: string, severity: 'saved' | 'deleted') => void;
   onChangeCustomerRequested?: () => void;
-  customerId?: number; // Used when creating a new deal
-  dealId?: number; // Used when editing an existing deal
-}
-
-interface Address {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: number;
+  customerUuid?: string;
+  dealUuid: string | null;
 }
 
 interface FormValues {
-  customerId: number;
-  address: Address;
+  customerUuid: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
   roomArea: number;
   numberOfPeople: number;
   appointmentDate: Date;
@@ -46,140 +39,204 @@ interface FormValues {
 }
 
 const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
-  // const customer: Customer | undefined = mockCustomers.find((cust) => cust.id === props.customerId);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isFetchingRef = useRef(false);
 
   const [fileName, setFileName] = useState('');
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'saved' | 'deleted'>('saved');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
+  const defaultImage = 'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg';
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
     if (file) {
       setFileName(file.name);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   }
 
   const schema = yup.object().shape({
-    customerId: yup.number().required('Customer is required'),
-    address: yup.object().shape({
-      street: yup.string().required('Street is required'),
-      city: yup.string().required('City is required'),
-      state: yup.string().required('State is required'),
-      zipCode: yup.number().required('Zip code is required'),
-    }),
+    customerUuid: yup.string().required('Customer is required'),
+    price: yup.number().required('Price is required'),
+    street: yup.string().required('Street is required'),
+    city: yup.string().required('City is required'),
+    state: yup.string().required('State is required'),
+    zipCode: yup.string().required('Zip code is required'),
     roomArea: yup.number().required('Room area is required'),
     numberOfPeople: yup.number().required('Number of people is required'),
-    appointmentDate: yup.date().required('Appointment date is required'),
+    appointmentDate: yup.date().nullable().required('Appointment date is required'),
+    progress: yup.mixed<DealProgressType>().oneOf(['InProgress', 'Pending', 'Closed'], 'Invalid progress option').required('Progress is required'),
     specialInstructions: yup.string().required('Special instructions are required'),
     roomAccess: yup
       .mixed<DealRoomAccessType>()
-      .oneOf(['keysObtained', 'keysNotRequired', 'keysWithDoorman'], 'Invalid room access option')
+      .oneOf(['KeysObtained', 'KeysNotRequired', 'KeysWithDoorman', 'KeysInLockbox', 'Other'])
       .required('Room access is required'),
-    price: yup.number().required('Price is required'),
-    progress: yup.mixed<DealProgressType>().oneOf(['pending', 'inProgress', 'closed'], 'Invalid progress option').required('Progress is required'),
-    // imageUrl: yup.string(),
   });
 
   const form = useForm<FormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
-      customerId: props.customerId ?? undefined,
-      address: { street: undefined, city: undefined, state: undefined, zipCode: undefined },
+      customerUuid: props.customerUuid ?? undefined,
+
+      street: undefined,
+      city: undefined,
+      state: undefined,
+      zipCode: undefined,
       roomArea: undefined,
       numberOfPeople: undefined,
       appointmentDate: undefined,
       specialInstructions: undefined,
-      roomAccess: 'keysWithDoorman',
+      roomAccess: 'KeysWithDoorman',
       price: undefined,
-      progress: 'inProgress',
+      progress: 'InProgress',
     },
   });
 
   useEffect(() => {
-    console.log('dealId', props.dealId);
+    if (props.customerUuid && props.open && !isFetchingRef.current) {
+      async function fetchCustomer(): Promise<void> {
+        if (isFetchingRef.current) {
+          return;
+        }
 
-    if (props.dealId) {
-      const deal: Deal | undefined = mockDeals.find((deal) => deal.id === props.dealId);
-      console.log(deal?.appointmentDate);
+        isFetchingRef.current = true;
+        setIsLoading(true);
 
-      if (!deal) {
-        return;
+        try {
+          const response = await api.get<{ data: Customer }>(`/customers/${props.customerUuid}`);
+          const responseData = response.data.data;
+          setCustomer(responseData);
+
+          form.reset({ customerUuid: props.customerUuid });
+        } catch (error) {
+          console.error('Failed to fetch customer', error);
+        } finally {
+          setIsLoading(false);
+          isFetchingRef.current = false;
+        }
       }
 
+      void fetchCustomer();
+    } else {
+      form.reset({});
+    }
+  }, [form, props.customerUuid, props.open]);
+
+  useEffect(() => {
+    if (props.dealUuid && !isFetchingRef.current) {
+      async function fetchDeal(): Promise<void> {
+        if (isFetchingRef.current) {
+          return;
+        }
+        setIsLoading(true);
+        isFetchingRef.current = true;
+
+        try {
+          const response = await api.get<{ data: DealWithCustomer }>(`/deals/${props.dealUuid}`);
+          const responseData = response.data.data;
+
+          form.reset({
+            customerUuid: responseData.customer.uuid,
+            street: responseData.street,
+            city: responseData.city,
+            state: responseData.state,
+            zipCode: responseData.zipCode,
+            roomArea: responseData.roomArea,
+            numberOfPeople: responseData.numberOfPeople,
+            appointmentDate: responseData.appointmentDate ? new Date(responseData.appointmentDate) : undefined,
+            specialInstructions: responseData.specialInstructions,
+            roomAccess: responseData.roomAccess,
+            price: responseData.price,
+            progress: responseData.progress,
+          });
+        } catch (error) {
+          console.error('Failed to fetch customer', error);
+        } finally {
+          setIsLoading(false);
+          isFetchingRef.current = false;
+        }
+      }
+
+      void fetchDeal();
+    } else {
       form.reset({
-        customerId: deal.customerId,
-        address: {
-          street: deal.street,
-          city: deal.city,
-          state: deal.state,
-          zipCode: deal.zipCode,
-        },
-        roomArea: deal.roomArea,
-        numberOfPeople: deal.numberOfPeople,
-        appointmentDate: new Date(deal.appointmentDate),
-        specialInstructions: deal.specialInstructions,
-        roomAccess: deal.roomAccess,
-        price: deal.price,
-        progress: deal.progress,
+        customerUuid: undefined,
+        street: undefined,
+        city: undefined,
+        state: undefined,
+        zipCode: undefined,
+        roomArea: undefined,
+        numberOfPeople: undefined,
+        appointmentDate: undefined,
+        specialInstructions: undefined,
+        roomAccess: undefined,
+        price: undefined,
+        progress: undefined,
       });
     }
-  }, [props.customerId, props.dealId, form]);
+  }, [props.dealUuid, form]);
 
-  function onSubmit(): () => void {
-    return form.handleSubmit((): void => {
+  async function onSubmit(formData: FormValues): Promise<void> {
+    setIsSubmitting(true);
+
+    try {
+      if (props.dealUuid) {
+        await api.put(`/deals/${props.dealUuid}`, formData);
+        console.log('deal: ', formData);
+      } else {
+        await api.post('/deals', formData);
+      }
+
       form.reset();
-      props.onClose();
-      setSnackbarMessage('Deal Saved');
-      setSnackbarSeverity('saved');
-      setSnackbarOpen(true);
-    });
+      props.onClose(true);
+
+      props.onShowSnackbar?.('Deal Saved', 'saved');
+    } catch (error) {
+      console.error('Error saving deal:', error);
+      props.onShowSnackbar?.('Failed to save deal', 'deleted');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleCancel(): void {
-    setFileName('');
     form.reset();
     if (props.open) {
-      props.onClose();
+      props.onClose(false);
     }
-  }
-
-  function handleSnackbarClose(): void {
-    setSnackbarOpen(false);
   }
 
   return (
     <>
-      <Modal open={props.open} onClose={props.onClose}>
+      <Modal open={props.open} onClose={() => props.onClose(false)}>
         <Box
           className="box"
           sx={{
             width: { xs: 300, sm: 520, md: 620 },
-            maxHeight: '90vh',
           }}
         >
           <Box className="form-title">
             <Typography variant="h5" className="title-header-modal">
-              {props.dealId ? 'Edit Deal' : 'Add New Deal'}
+              {props.dealUuid ? 'Edit Deal' : 'Add New Deal'}
             </Typography>
             <Button endIcon={<CancelIcon className="close-icon" />} onClick={handleCancel} />
           </Box>
 
           <FormProvider {...form}>
-            {!props.dealId && (
+            {!props.dealUuid && (
               <Grid container spacing={3} className="customer-box-new-deal">
                 <Grid size={{ xs: 3, sm: 1.5, md: 1.5 }}>
-                  {/* <Image
-                    src={customer?.avatar || '/placeholder-avatar.jpg'}
-                    alt="Customer picture"
-                    width={44}
-                    height={44}
-                    className="deal-picture-new-deal"
-                  /> */}
+                  <img src={customer?.avatar ?? defaultAvatar} alt="Customer picture" width={44} height={44} className="deal-picture-new-deal" />
                 </Grid>
                 <Grid size={{ xs: 9, sm: 6.5, md: 6.5 }}>
                   <Typography variant="body2">{'Customer'}</Typography>
-                  <Typography variant="body1">{/* {customer?.firstName} {customer?.lastName} */}</Typography>
+                  <Typography variant="body1">
+                    {customer?.firstName} {customer?.lastName}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Button onClick={props.onChangeCustomerRequested} variant="outlined" color="secondary" className="change-customer-button-new-deal">
@@ -195,8 +252,23 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                 <Typography variant="body1" className="label">
                   Room Images
                 </Typography>
+
+                {/* Image preview */}
+                <img
+                  src={previewUrl ?? defaultImage}
+                  alt="Room Image"
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    marginBottom: '8px',
+                  }}
+                />
+
+                {/* Upload button */}
                 <label htmlFor="upload-image" style={{ cursor: 'pointer' }}>
-                  <input id="upload-image" name="file" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                  <input id="upload-image" name="imageUrl" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
                   <Button variant="contained" component="span" className="upload-button">
                     <span style={{ display: 'block' }}>{fileName || 'ADD'}</span>
                   </Button>
@@ -208,16 +280,16 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                     <Typography variant="body1" className="label">
                       Address
                     </Typography>
-                    <TextFieldController name="address.street" placeholder="Street" type="text" />
+                    <TextFieldController name="street" placeholder="Street" type="text" />
                   </Grid>
                   <Grid size={{ xs: 12, md: 5 }}>
-                    <TextFieldController name="address.city" placeholder="City" type="text" />
+                    <TextFieldController name="city" placeholder="City" type="text" />
                   </Grid>
                   <Grid size={{ xs: 12, md: 4 }}>
-                    <TextFieldController name="address.state" placeholder="State/Province" type="text" />
+                    <TextFieldController name="state" placeholder="State/Province" type="text" />
                   </Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
-                    <TextFieldController name="address.zipCode" placeholder="Zip Code" type="text" />
+                    <TextFieldController name="zipCode" placeholder="Zip Code" type="string" />
                   </Grid>
                 </Grid>
 
@@ -255,9 +327,9 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                       name="roomAccess"
                       skeletonOnLoading
                       options={[
-                        { value: DealRoomAccess.keysWithDoorman.id, label: DealRoomAccess.keysWithDoorman.label },
-                        { value: DealRoomAccess.keysObtained.id, label: DealRoomAccess.keysObtained.label },
-                        { value: DealRoomAccess.keysNotRequired.id, label: DealRoomAccess.keysNotRequired.label },
+                        { value: DealRoomAccess.KeysWithDoorman.id, label: DealRoomAccess.KeysWithDoorman.label },
+                        { value: DealRoomAccess.KeysObtained.id, label: DealRoomAccess.KeysObtained.label },
+                        { value: DealRoomAccess.KeysNotRequired.id, label: DealRoomAccess.KeysNotRequired.label },
                       ]}
                     />
                   </Grid>
@@ -284,9 +356,9 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                         name="progress"
                         skeletonOnLoading
                         options={[
-                          { value: DealProgress.closed.id, label: DealProgress.closed.label },
-                          { value: DealProgress.inProgress.id, label: DealProgress.inProgress.label },
-                          { value: DealProgress.pending.id, label: DealProgress.pending.label },
+                          { value: DealProgress.InProgress.id, label: DealProgress.InProgress.label },
+                          { value: DealProgress.Pending.id, label: DealProgress.Pending.label },
+                          { value: DealProgress.Closed.id, label: DealProgress.Closed.label },
                         ]}
                       />
                     </Grid>
@@ -294,14 +366,21 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 6 }} className="actions-button">
-                  {!props.dealId && (
+                  {!props.dealUuid && (
                     <Button onClick={handleCancel} variant="outlined" className="cancel-button">
                       Cancel
                     </Button>
                   )}
 
-                  <Button variant="contained" color="primary" className="save-button" onClick={onSubmit} disabled={!form.formState.isDirty}>
-                    {props.dealId ? 'Done' : 'Save Deal'}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    className="save-button"
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                    onClick={form.handleSubmit(onSubmit)}
+                    disabled={!form.formState.isDirty}
+                  >
+                    {isSubmitting ? <CircularProgress size={20} color="inherit" /> : props.dealUuid ? 'Done' : 'Save Deal'}
                   </Button>
                 </Grid>
               </Grid>
@@ -309,7 +388,6 @@ const DealModal: React.FC<DealModalProps> = (props: DealModalProps) => {
           </FormProvider>
         </Box>
       </Modal>
-      <AlertSnackbar open={snackbarOpen} message={snackbarMessage} severity={snackbarSeverity} onClose={handleSnackbarClose} />
     </>
   );
 };

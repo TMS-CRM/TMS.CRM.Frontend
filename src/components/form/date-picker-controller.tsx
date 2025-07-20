@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import { FormControl, FormHelperText, TextField } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -46,8 +44,6 @@ const DatePickerController: React.FC<DatePickerControllerProps> = (props: DatePi
                 },
               }}
             />
-
-            <FormHelperText error>{error?.message as React.ReactNode}</FormHelperText>
           </FormControl>
         );
       }}

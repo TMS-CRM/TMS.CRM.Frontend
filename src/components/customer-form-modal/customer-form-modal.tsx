@@ -1,14 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { yupResolver } from '@hookform/resolvers/yup';
 import CancelIcon from '@mui/icons-material/Cancel';
+import { CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import '../../styles/modal.css';
@@ -16,18 +15,10 @@ import { api } from '../../services/api';
 import TextFieldController from '../form/text-field-controller';
 
 interface CustomerModalProps {
-  onShowSnackbar?: (message: string, severity: 'saved' | 'deleted') => void;
   open: boolean;
-  onClose: () => void;
-  onCustomerListChange?: () => void;
-  customerUuid?: number | null;
-}
-
-interface Address {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
+  onShowSnackbar: (message: string, severity: 'saved' | 'deleted') => void;
+  onClose: (refresh: boolean) => void;
+  customerUuid: string | null;
 }
 
 interface FormValues {
@@ -35,18 +26,24 @@ interface FormValues {
   lastName: string;
   email: string;
   phone: string;
-  address: Address;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
 }
 
 const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalProps) => {
-  const customerUuid = props.customerUuid;
-
   const [fileName, setFileName] = useState('');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const defaultAvatar: string = 'https://www.gravatar.com/avatar/?d=mp&f=y';
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
     if (file) {
       setFileName(file.name);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   }
 
@@ -55,12 +52,10 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
     lastName: yup.string().required('Last name is required'),
     email: yup.string().required('Email is required'),
     phone: yup.string().required('Phone is required'),
-    address: yup.object().shape({
-      street: yup.string().required('Street address is required'),
-      city: yup.string().required('City is required'),
-      state: yup.string().required('State is required'),
-      zipCode: yup.string().required('Zip code is required'),
-    }),
+    street: yup.string().required('Street address is required'),
+    city: yup.string().required('City is required'),
+    state: yup.string().required('State is required'),
+    zipCode: yup.string().required('Zip code is required'),
   });
 
   const form = useForm<FormValues>({
@@ -70,54 +65,52 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
       lastName: undefined,
       email: undefined,
       phone: undefined,
-      address: { street: undefined, city: undefined, state: undefined, zipCode: undefined },
+      street: undefined,
+      city: undefined,
+      state: undefined,
+      zipCode: undefined,
     },
   });
 
-  function onSubmit(): void {
-    form.handleSubmit(async (formData) => {
-      console.log('FormData', formData);
+  async function onSubmit(formData: FormValues): Promise<void> {
+    setIsSubmitting(true);
 
-      try {
-        if (!customerUuid) {
-          await api.post('/customers', formData);
-          console.log(customerUuid);
-        } else {
-          return;
-        }
+    try {
+      await api.post('/customers', formData);
 
-        form.reset();
-        props.onClose();
-        props.onShowSnackbar?.('Customer Saved', 'saved');
-      } catch (error) {
-        console.error('Error saving customer:', error);
-        props.onShowSnackbar?.('Failed to save customer', 'deleted');
-      }
-    })();
+      form.reset();
+      props.onClose(true);
+
+      props.onShowSnackbar('Customer Saved', 'saved');
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      props.onShowSnackbar('Failed to save customer', 'deleted');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleCancel(): void {
     form.reset();
     if (props.open) {
-      props.onClose();
+      props.onClose(false);
     }
   }
 
   return (
     <>
-      <Modal open={props.open} onClose={props.onClose}>
+      <Modal open={props.open} onClose={() => props.onClose(false)}>
         <Box
           className="box"
           sx={{
             width: { xs: 300, sm: 520, md: 620 },
-            maxHeight: '90vh',
           }}
         >
           <Box className="form-title">
             <Typography variant="h5" className="title-header-modal">
               Add New Customer
             </Typography>
-            <Button endIcon={<CancelIcon className="close-icon" />} onClick={handleCancel} />{' '}
+            <Button endIcon={<CancelIcon className="close-icon" />} onClick={handleCancel} />
           </Box>
 
           <FormProvider {...form}>
@@ -126,10 +119,25 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
                 <Typography variant="body1" className="label">
                   Avatar
                 </Typography>
+
+                {/* Avatar preview */}
+                <img
+                  src={previewUrl ?? defaultAvatar}
+                  alt="User Avatar"
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    marginBottom: '8px',
+                  }}
+                />
+
+                {/* Upload button */}
                 <label htmlFor="upload-image" style={{ cursor: 'pointer' }}>
                   <input id="upload-image" name="file" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
                   <Button variant="contained" component="span" className="upload-button">
-                    <span style={{ display: 'block' }}>{fileName || 'ADD'}</span>
+                    <span>{fileName || 'ADD'}</span>
                   </Button>
                 </label>
               </div>
@@ -169,16 +177,16 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
                       <Typography variant="body1" className="label">
                         Address
                       </Typography>
-                      <TextFieldController name="address.street" placeholder="Street Address" type="text" />
+                      <TextFieldController name="street" placeholder="Street Address" type="text" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 5 }}>
-                      <TextFieldController name="address.city" placeholder="City" type="text" />
+                      <TextFieldController name="city" placeholder="City" type="text" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <TextFieldController name="address.state" placeholder="State/Province" type="text" />
+                      <TextFieldController name="state" placeholder="State/Province" type="text" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <TextFieldController name="address.zipCode" placeholder="Zip Code" type="text" />
+                      <TextFieldController name="zipCode" placeholder="Zip Code" type="text" />
                     </Grid>
                   </Grid>
                 </Grid>
@@ -189,8 +197,14 @@ const CustomerFormModal: React.FC<CustomerModalProps> = (props: CustomerModalPro
                   <Button variant="outlined" onClick={handleCancel} className="cancel-button">
                     Cancel
                   </Button>
-                  <Button variant="contained" color="primary" onClick={onSubmit} className="save-button">
-                    Save Customer
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={form.handleSubmit(onSubmit)}
+                    className="save-button"
+                    disabled={!form.formState.isDirty}
+                  >
+                    {isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Save Customer'}
                   </Button>
                 </Grid>
               </Grid>

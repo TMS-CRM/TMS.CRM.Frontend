@@ -1,0 +1,42 @@
+.container-record-activity {
+  background-color: #eef6fb;
+  padding: 24px;
+  flex: 1;
+}
+
+.box-record-activity {
+  background-color: #ffff;
+  border-radius: 12px;
+  border: 1px solid #eaeef4;
+  margin-bottom: 24px;
+}
+
+.header-record-activity {
+  padding: 24px !important;
+  padding-bottom: 36px !important;
+}
+
+.form-box-record-activity {
+  padding: 0 24px 20px 24px !important;
+}
+
+.footer-record-activity {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+@media (max-width: 447px) {
+  .container-record-activity {
+    padding: 16px !important;
+  }
+
+  .header-record-activity {
+    padding: 16px !important;
+    padding-bottom: 16px !important;
+  }
+
+  .form-box-record-activity {
+    padding: 0 16px 10px 24px !important;
+  }
+}

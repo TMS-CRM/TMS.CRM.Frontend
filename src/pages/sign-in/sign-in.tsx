@@ -1,10 +1,11 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { Alert, Box, Button, Divider, Grid, IconButton, InputAdornment, Paper, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Divider, Grid, IconButton, InputAdornment, Paper, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
+import logo from '../../assets/leaf.svg';
 import './sign-in.css';
 import TextFieldController from '../../components/form/text-field-controller';
 import { useAuth } from '../../hooks/use-auth';
@@ -31,8 +32,10 @@ const SignIn: React.FC = () => {
 
   const handleToggleVisibility = (): void => setShowPassword((prev) => !prev);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const signInSchema = yup.object({
-    email: yup.string().email('Invalid email').required('Email is required'),
+    email: yup.string().required('Email is required'),
     password: yup.string().required('Password is required'),
   });
 
@@ -71,62 +74,63 @@ const SignIn: React.FC = () => {
     }
   }, [errorMessage, successMessage]);
 
-  // Submit do login
-  function onSubmitSignIn(): (event?: React.BaseSyntheticEvent) => Promise<void> {
-    return signInForm.handleSubmit(async (data): Promise<void> => {
-      setErrorMessage(null);
-      setSuccessMessage(null);
+  // Submit login
+  async function onSubmitSignIn(data: SignInFormValues): Promise<void> {
+    setIsSubmitting(true);
 
-      try {
-        const result = await signIn({ email: data.email, password: data.password });
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
-        if (result.success) {
-          void navigate('/');
-        } else if (result.session) {
-          setSession(result.session);
-          setEmail(data.email);
-          setErrorMessage('New password required to continue. Please define a new password.');
-        } else {
-          setErrorMessage('Invalid email or password');
-        }
-      } catch (error) {
-        setErrorMessage('Unexpected error during sign-in. Please try again.');
-        console.error(error);
+    try {
+      const result = await signIn({ email: data.email, password: data.password });
+      console.log('SIGN IN RESULT', result);
+
+      if (result.success) {
+        void navigate('/');
+      } else if (result.session) {
+        setSession(result.session);
+        setEmail(data.email);
+        setErrorMessage('New password required to continue. Please define a new password.');
+      } else {
+        setErrorMessage('Invalid email or password');
       }
-    });
+    } catch (error) {
+      setErrorMessage('Unexpected error during sign-in. Please try again.');
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   // Submit para definir nova senha
-  function onSubmitDefinePassword(): () => Promise<void> {
-    return definePasswordForm.handleSubmit(async (data): Promise<void> => {
-      setErrorMessage(null);
-      setSuccessMessage(null);
+  async function onSubmitDefinePassword(data: DefinePasswordFormValues): Promise<void> {
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
-      if (!session) {
-        setErrorMessage('Session expired, please login again.');
+    if (!session) {
+      setErrorMessage('Session expired, please login again.');
+      setSession(null);
+      return;
+    }
+
+    try {
+      const success = await definePassword({
+        email,
+        password: data.newPassword,
+        session,
+      });
+
+      if (success) {
+        definePasswordForm.reset();
         setSession(null);
-        return;
-      }
-
-      try {
-        const success = await definePassword({
-          email,
-          password: data.newPassword,
-          session,
-        });
-
-        if (success) {
-          definePasswordForm.reset();
-          setSession(null);
-          setEmail('');
-          setSuccessMessage('Password defined successfully. Please log in.');
-        } else {
-          setErrorMessage('Failed to define password. Please try again.');
-        }
-      } catch {
+        setEmail('');
+        setSuccessMessage('Password defined successfully. Please log in.');
+      } else {
         setErrorMessage('Failed to define password. Please try again.');
       }
-    });
+    } catch {
+      setErrorMessage('Failed to define password. Please try again.');
+    }
   }
 
   return (
@@ -134,7 +138,7 @@ const SignIn: React.FC = () => {
       <Grid size={{ xs: 12, sm: 12, md: 8 }} className="left-panel">
         <div className="branding-container">
           <div className="crm-container">
-            {/* <Image src={logo} alt="Logo" className="logo-leaf" /> */}
+            <img src={logo} alt="Logo" className="logo-leaf" />
             <Typography className="text-CRM">CRM</Typography>
           </div>
 
@@ -153,80 +157,79 @@ const SignIn: React.FC = () => {
             <Paper elevation={3} className="grid-container-sign-in">
               {!session ? (
                 <FormProvider {...signInForm} key="sign-in">
-                  <form onSubmit={onSubmitSignIn}>
-                    <Typography variant="h4" className="title-login" color="primary">
-                      Sign In
-                    </Typography>
+                  <Typography variant="h4" className="title-login" color="primary">
+                    Sign In
+                  </Typography>
 
-                    <TextFieldController name="email" label="Email" type="email" />
-                    <TextFieldController
-                      name="password"
-                      label="Password"
-                      type={showPassword ? 'text' : 'password'}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton onClick={handleToggleVisibility} edge="end">
-                              {showPassword ? <Visibility /> : <VisibilityOff />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
+                  <TextFieldController name="email" label="Email" type="email" />
+                  <TextFieldController
+                    name="password"
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={handleToggleVisibility} edge="end">
+                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
 
-                    <Button
-                      type="submit"
-                      className="submit-button-sign-in"
-                      disabled={!signInForm.formState.isDirty || signInForm.formState.isSubmitting}
-                    >
-                      Sign In
-                    </Button>
-                  </form>
+                  <Button
+                    className="submit-button-sign-in"
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                    onClick={signInForm.handleSubmit(onSubmitSignIn)}
+                    disabled={!signInForm.formState.isDirty || signInForm.formState.isSubmitting}
+                  >
+                    {isSubmitting ? <CircularProgress size={20} color="inherit" /> : ' Sign In'}
+                  </Button>
                 </FormProvider>
               ) : (
                 <FormProvider {...definePasswordForm} key="define-password">
-                  <form onSubmit={() => void onSubmitDefinePassword()}>
-                    <Typography variant="h4" className="title-login" color="primary">
-                      Define your new password
-                    </Typography>
+                  <Typography variant="h4" className="title-login" color="primary">
+                    Define your new password
+                  </Typography>
 
-                    <TextFieldController
-                      name="newPassword"
-                      label="New Password"
-                      type={showPassword ? 'text' : 'password'}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton onClick={handleToggleVisibility} edge="end">
-                              {showPassword ? <Visibility /> : <VisibilityOff />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    <TextFieldController
-                      name="confirmPassword"
-                      label="Confirm Password"
-                      type={showPassword ? 'text' : 'password'}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton onClick={handleToggleVisibility} edge="end">
-                              {showPassword ? <Visibility /> : <VisibilityOff />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
+                  <TextFieldController
+                    name="newPassword"
+                    label="New Password"
+                    type={showPassword ? 'text' : 'password'}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={handleToggleVisibility} edge="end">
+                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <TextFieldController
+                    name="confirmPassword"
+                    label="Confirm Password"
+                    type={showPassword ? 'text' : 'password'}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={handleToggleVisibility} edge="end">
+                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
 
-                    <Button
-                      type="submit"
-                      className="submit-button-sign-in"
-                      disabled={!definePasswordForm.formState.isDirty || definePasswordForm.formState.isSubmitting}
-                    >
-                      Define Password
-                    </Button>
-                  </form>
+                  <Button
+                    type="submit"
+                    className="submit-button-sign-in"
+                    disabled={!definePasswordForm.formState.isDirty || definePasswordForm.formState.isSubmitting}
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                    onClick={definePasswordForm.handleSubmit(onSubmitDefinePassword)}
+                  >
+                    {isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Define Password'}
+                  </Button>
                 </FormProvider>
               )}
             </Paper>

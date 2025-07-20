@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import axios, { type AxiosResponse } from 'axios';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/auth-context';
 import { api } from '../services/api';
 import type { ApiResponseBody } from '../types/api-responses/response-body';
@@ -16,18 +17,21 @@ import {
   type JwtPayload,
   REFRESH_TOKEN_KEY,
   type SwitchTenant,
-  type User,
 } from '../types/auth-context';
+import type { User } from '../types/user';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [tenantUuid, setTenantUuid] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = Cookies.get(ACCESS_TOKEN_KEY);
     if (token) {
       decodeAndSetUser(token);
     } else {
-      // router.push('/sign-in');
+      void navigate('/sign-in');
     }
   }, []);
 
@@ -76,27 +80,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     Cookies.remove(ACCESS_TOKEN_KEY);
     Cookies.remove(REFRESH_TOKEN_KEY);
     setUser(null);
-    // router.push('/sign-in');
+    void navigate('/sign-in');
   }
 
-  async function switchTenant(tenantUuid: SwitchTenant): Promise<boolean> {
+  async function switchTenant({ tenantUuid }: SwitchTenant): Promise<void> {
+    const refreshToken = Cookies.get(REFRESH_TOKEN_KEY);
+
     try {
-      const res = await api.post('/auth/switch-tenant', tenantUuid);
+      const res = await api.post(
+        '/auth/switch-tenant',
+        { tenantUuid },
+        {
+          headers: {
+            authorization: Cookies.get(ACCESS_TOKEN_KEY),
+            'refresh-token': refreshToken,
+          },
+        },
+      );
 
       const { accessToken } = res.data.data;
 
-      Cookies.set(ACCESS_TOKEN_KEY, accessToken, {
-        // secure: process.env.NODE_ENV === 'production',
-        sameSite: 'Strict',
-        path: '/',
-      });
-
+      Cookies.set(ACCESS_TOKEN_KEY, accessToken);
       decodeAndSetUser(accessToken);
-
-      return true;
+      window.location.reload();
     } catch (error) {
-      console.error('Erro ao trocar de tenant:', error);
-      return false;
+      console.error('Error switch tenant:', error);
     }
   }
 
@@ -114,17 +122,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   function decodeAndSetUser(token: string): void {
     try {
       const decoded: JwtPayload = jwtDecode<JwtPayload>(token);
+      console.log('decoded', decoded);
 
       setUser({
-        id: decoded.id,
-        name: decoded.name,
+        uuid: decoded.userUuid,
+        firstName: decoded.firstName,
+        lastName: decoded.lastName,
         email: decoded.email,
       });
+
+      setTenantUuid(decoded.tenantUuid);
     } catch (error) {
       console.error('Invalid JWT token:', error);
       setUser(null);
     }
   }
 
-  return <AuthContext.Provider value={{ user, signIn, definePassword, signOut, switchTenant }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, tenantUuid, signIn, definePassword, signOut, switchTenant }}>{children}</AuthContext.Provider>;
 };
